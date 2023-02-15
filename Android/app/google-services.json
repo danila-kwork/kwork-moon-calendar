@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "774093782114",
+    "firebase_url": "https://moon--calendar-default-rtdb.firebaseio.com",
+    "project_id": "moon--calendar",
+    "storage_bucket": "moon--calendar.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:774093782114:android:59aec09ff68c19b60a253b",
+        "android_client_info": {
+          "package_name": "ru.mooncalendar"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "774093782114-av8j2496ooh9lb4rm5ombrq8afhborku.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDQOwlvzQYyFcWdoa3U3D3lnvZs4hbcBok"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "774093782114-av8j2496ooh9lb4rm5ombrq8afhborku.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
