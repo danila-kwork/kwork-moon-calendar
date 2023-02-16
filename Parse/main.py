@@ -8,12 +8,12 @@ from bs4 import BeautifulSoup
 filePath = 'moon_calendar.json'
 
 test_date = datetime.datetime.strptime("01-7-2022", "%d-%m-%Y")
-start = datetime.date(2020, 1, 1)
+start = datetime.date(2023, 1, 1)
 
-# 2050-01-01
-k = 10958
+# 2050-01-01 - 9862
+k = 9862
 
-data = []
+data = {}
 
 for day in range(k):
     date = (start + datetime.timedelta(days=day)).isoformat()
@@ -21,7 +21,7 @@ for day in range(k):
 
     url = f'https://www.astrostar.ru/calendars/moon/{date}.html'
     response = requests.get(url)
-    soup = BeautifulSoup(response.text, 'lxml')
+    soup = BeautifulSoup(response.text, 'html.parser')
 
     allDescription = soup.findAll('div', class_="mooncalendar-day-description")
     allTitle = soup.findAll('div', class_="title-box mt-5")
@@ -41,8 +41,10 @@ for day in range(k):
             value = row.find_all('td', class_='value')[0].text.strip()
             table.append(f'{value}-{parameter}')
 
-        data.append({'title': title, 'desc': desc, 'moon_image_url': moon_image_url,
-                     'date': date, 'table': ';'.join(table)})
+        data.update({
+            f'{date}_{index}': {'title': title, 'desc': desc, 'moon_image_url': moon_image_url,
+                                'date': date, 'table': ';'.join(table)}
+        })
 
 if os.path.exists(filePath):
     os.remove(filePath)

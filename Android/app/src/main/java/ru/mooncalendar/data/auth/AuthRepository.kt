@@ -48,7 +48,7 @@ class AuthRepository {
         onSuccess: () -> Unit,
         onFailure: (message: String) -> Unit
     ) {
-        db.reference.child("users").setValue(User(
+        db.reference.child("users").child(id).setValue(User(
             id = id,
             email = email,
             password = password

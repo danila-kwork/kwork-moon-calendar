@@ -22,7 +22,7 @@ fun DataSnapshot.mapMoonCalendar(): MoonCalendar {
     return MoonCalendar(
         date = this.child("date").value.toString(),
         title = this.child("title").value.toString(),
-        description = this.child("description").value.toString(),
+        description = this.child("desc").value.toString(),
         moonImageUrl = this.child("moon_image_url").value.toString(),
         table = table.map {
 
