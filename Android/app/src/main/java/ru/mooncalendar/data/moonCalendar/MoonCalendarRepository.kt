@@ -25,14 +25,14 @@ class MoonCalendarRepository {
 
         db.reference.child("moon_calendar").child("${correctionDateFormat}_${number}").get()
             .addOnSuccessListener {
-                val moonCalendarOne = it.mapMoonCalendar()
-                if(moonCalendarOne != null) onSuccess(arrayListOf(moonCalendarOne))
+                val moonCalendarOne = it.mapMoonCalendar(correctionDateFormat)
+                onSuccess(arrayListOf(moonCalendarOne))
                 if(number != 1) {
                     getMoonCalendar(
                         filterDate = filterDate,
                         number = number + 1,
                         onSuccess = { result ->
-                            if(moonCalendarOne != null) result.add(moonCalendarOne)
+                            result.add(moonCalendarOne)
                             onSuccess(result)
                         },
                         onFailure = onFailure
