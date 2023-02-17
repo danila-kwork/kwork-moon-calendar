@@ -1,30 +1,43 @@
 package ru.mooncalendar.data.moonCalendar
 
+import android.annotation.SuppressLint
+import android.icu.text.SimpleDateFormat
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
 import ru.mooncalendar.data.moonCalendar.model.MoonCalendar
 import ru.mooncalendar.data.moonCalendar.model.mapMoonCalendar
+import java.util.*
+import kotlin.collections.ArrayList
 
 class MoonCalendarRepository {
 
     private val db = Firebase.database
 
+    @SuppressLint("NewApi")
     fun getMoonCalendar(
-        filterDate: String? = null,
-        onSuccess:(List<MoonCalendar>) -> Unit,
+        filterDate: Date,
+        number: Int = 0,
+        onSuccess:(ArrayList<MoonCalendar>) -> Unit,
         onFailure:(message:String) -> Unit = {}
     ) {
-        db.reference.child("moon_calendar").get()
-            .addOnSuccessListener {
-                val moonCalendar = it.children.map { it.mapMoonCalendar() }
-                    .filter { calendar ->
-                        if(filterDate != null)
-                            filterDate == calendar.date
-                        else
-                            true
-                    }
+        val simpleDateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val correctionDateFormat = simpleDateFormat.format(filterDate)
 
-                onSuccess(moonCalendar)
+        db.reference.child("moon_calendar").child("${correctionDateFormat}_${number}").get()
+            .addOnSuccessListener {
+                val moonCalendarOne = it.mapMoonCalendar()
+                if(moonCalendarOne != null) onSuccess(arrayListOf(moonCalendarOne))
+                if(number != 1) {
+                    getMoonCalendar(
+                        filterDate = filterDate,
+                        number = number + 1,
+                        onSuccess = { result ->
+                            if(moonCalendarOne != null) result.add(moonCalendarOne)
+                            onSuccess(result)
+                        },
+                        onFailure = onFailure
+                    )
+                }
             }
             .addOnFailureListener { onFailure(it.message ?: "error") }
     }

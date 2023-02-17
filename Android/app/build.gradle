@@ -55,6 +55,7 @@ dependencies {
     implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.3.1'
     implementation 'androidx.activity:activity-compose:1.3.1'
     implementation 'com.google.firebase:firebase-database-ktx:20.1.0'
+    implementation 'com.google.firebase:firebase-perf-ktx:20.1.1'
     implementation 'com.google.firebase:firebase-auth-ktx:21.1.0'
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
@@ -63,6 +64,17 @@ dependencies {
     debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
     debugImplementation "androidx.compose.ui:ui-test-manifest:$compose_version"
 
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:1.1.6")
+
+    implementation "io.github.vanpra.compose-material-dialogs:datetime:0.8.1-rc"
+    implementation "io.github.boguszpawlowski.composecalendar:composecalendar:1.0.2"
+    implementation "io.github.boguszpawlowski.composecalendar:kotlinx-datetime:1.0.2"
+
     implementation("androidx.navigation:navigation-compose:2.5.3")
     implementation("io.coil-kt:coil-compose:2.2.2")
+
+    //Lottie
+    implementation "com.airbnb.android:lottie-compose:4.1.0"
+
+    implementation "com.google.accompanist:accompanist-systemuicontroller:0.29.1-alpha"
 }
