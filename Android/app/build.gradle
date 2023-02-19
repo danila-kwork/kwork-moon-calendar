@@ -2,6 +2,7 @@ plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
     id 'com.google.gms.google-services'
+    id 'kotlin-kapt'
 }
 
 android {
@@ -57,6 +58,7 @@ dependencies {
     implementation 'com.google.firebase:firebase-database-ktx:20.1.0'
     implementation 'com.google.firebase:firebase-perf-ktx:20.1.1'
     implementation 'com.google.firebase:firebase-auth-ktx:21.1.0'
+    implementation 'com.google.firebase:firebase-config-ktx:21.2.1'
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
@@ -66,9 +68,22 @@ dependencies {
 
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:1.1.6")
 
-    implementation 'com.maxkeppeler.sheets-compose-dialogs:core:1.0.4'
-    implementation 'com.maxkeppeler.sheets-compose-dialogs:calendar:1.0.4'
+    implementation "io.github.vanpra.compose-material-dialogs:datetime:0.8.1-rc"
+    implementation "io.github.boguszpawlowski.composecalendar:composecalendar:1.0.2"
+    implementation "io.github.boguszpawlowski.composecalendar:kotlinx-datetime:1.0.2"
 
     implementation("androidx.navigation:navigation-compose:2.5.3")
     implementation("io.coil-kt:coil-compose:2.2.2")
+
+    //Lottie
+    implementation "com.airbnb.android:lottie-compose:4.1.0"
+
+    implementation "com.google.accompanist:accompanist-systemuicontroller:0.29.1-alpha"
+    implementation "com.google.accompanist:accompanist-permissions:0.29.1-alpha"
+
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+
+    implementation("androidx.room:room-ktx:2.5.0")
+    kapt("androidx.room:room-compiler:2.5.0")
 }

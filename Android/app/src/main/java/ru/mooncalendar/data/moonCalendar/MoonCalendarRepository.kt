@@ -21,11 +21,11 @@ class MoonCalendarRepository {
         onFailure:(message:String) -> Unit = {}
     ) {
         val simpleDateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-        val correctionDateFormat = "2023-01-01" //simpleDateFormat.format(filterDate)
+        val correctionDateFormat = simpleDateFormat.format(filterDate)
 
         db.reference.child("moon_calendar").child("${correctionDateFormat}_${number}").get()
             .addOnSuccessListener {
-                val moonCalendarOne = it.mapMoonCalendar() //.children.map { it.mapMoonCalendar() }
+                val moonCalendarOne = it.mapMoonCalendar(correctionDateFormat)
                 onSuccess(arrayListOf(moonCalendarOne))
                 if(number != 1) {
                     getMoonCalendar(

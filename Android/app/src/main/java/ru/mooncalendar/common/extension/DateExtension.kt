@@ -8,22 +8,18 @@ import java.time.ZoneId
 import java.util.*
 
 @SuppressLint("NewApi")
+fun Date.toLocalDate(): LocalDate {
+    return this.toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
+}
+
+@SuppressLint("NewApi")
 fun LocalDate.toDate(): Date {
     return Date.from(this.atStartOfDay(ZoneId.systemDefault()).toInstant())
 }
 
 fun Date.parseToBaseDateFormat(): String {
-
-    return if(this.isToday()){
-        "Cегодня"
-    }else if(this.isYesterday()){
-        "Вчера"
-    }else if(this.isTomorrow()){
-        "Завтра"
-    }else {
-        val dateFormat = SimpleDateFormat("dd MMMM yyyy", Locale.getDefault())
-        dateFormat.format(this)
-    }
+    val dateFormat = SimpleDateFormat("dd MMMM yyyy", Locale.getDefault())
+    return dateFormat.format(this)
 }
 
 fun Date.isToday(): Boolean {
