@@ -1,8 +1,10 @@
 package ru.mooncalendar.screens
 
 import android.app.Application
+import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.os.Build
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModel
@@ -28,13 +30,20 @@ class MainActivityViewModel(
     init {
         preferences = ObservablePreferences(application)
         preferences.automaticStepCounting.observeForever(automaticStepCountingObserver)
-        application.registerReceiver(dateChangedBroadcastReceiver, IntentFilter(Intent.ACTION_DATE_CHANGED))
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (Build.VERSION.SDK_INT >= 33) {
+                application.registerReceiver(dateChangedBroadcastReceiver, IntentFilter(Intent.ACTION_DATE_CHANGED), Context.RECEIVER_EXPORTED)
+            }
+        }else {
+            application.registerReceiver(dateChangedBroadcastReceiver, IntentFilter(Intent.ACTION_DATE_CHANGED))
+        }
     }
 
     class Factory(
         private val application: Application
     ) : ViewModelProvider.Factory {
 
+        @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(MainActivityViewModel::class.java)) {
                 return MainActivityViewModel(

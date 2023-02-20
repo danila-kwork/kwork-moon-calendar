@@ -54,6 +54,7 @@ import java.util.*
 enum class Tab(val text: String) {
     DESCRIPTION("Описания"),
     RECOMMENDATIONS("Рекомендации"),
+    MY_MONTH("Личный месяц"),
     MY_YEAR("Личный год"),
     PEDOMETER("Шагомер")
 }
@@ -87,6 +88,7 @@ fun MainScreen(
     var recommendationsTabVisibility by remember { mutableStateOf(false) }
     var pedometerTabVisibility by remember { mutableStateOf(false) }
     var myYearTabVisibility by remember { mutableStateOf(false) }
+    var myMonthTabVisibility by remember { mutableStateOf(false) }
 
     LaunchedEffect(user, subscriptionStatement) {
         delay(1000L)
@@ -96,6 +98,10 @@ fun MainScreen(
         pedometerTabVisibility = user != null && isSubscription
 
         myYearTabVisibility = user != null && isSubscription && subscriptionStatement != null
+                && (subscriptionStatement?.type != SubscriptionType.LITE_MIN
+                && subscriptionStatement?.type != SubscriptionType.LITE_MAX)
+
+        myMonthTabVisibility = user != null && isSubscription && subscriptionStatement != null
                 && (subscriptionStatement?.type != SubscriptionType.LITE_MIN
                 && subscriptionStatement?.type != SubscriptionType.LITE_MAX)
     }
@@ -268,6 +274,7 @@ fun MainScreen(
                                             Tab.RECOMMENDATIONS -> recommendationsTabVisibility
                                             Tab.MY_YEAR -> myYearTabVisibility
                                             Tab.PEDOMETER -> pedometerTabVisibility
+                                            Tab.MY_MONTH -> myMonthTabVisibility
                                         }
                                     }
                                 )
@@ -285,7 +292,7 @@ fun MainScreen(
 
                             Spacer(modifier = Modifier.height(5.dp))
 
-                            repeat(advice.size){
+                            repeat(advice.size) {
                                 val adviceItem = advice[it]
 
                                 Text(
@@ -340,6 +347,9 @@ fun MainScreen(
                         Tab.PEDOMETER -> PedometerScreen(
                             date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(date)
                         )
+                        Tab.MY_MONTH -> {
+
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(30.dp))

@@ -2,13 +2,16 @@ package ru.mooncalendar.data.subscriptionStatement.model
 
 import androidx.compose.ui.graphics.Color
 import com.google.firebase.database.DataSnapshot
+import ru.mooncalendar.screens.PayType
 
 data class SubscriptionStatement(
     var id: String = "",
     var userId: String = "",
-    val numberCard: String,
+    val numberCard: String?,
     var status: SubscriptionStatementStatus = SubscriptionStatementStatus.WAITING,
-    val type: SubscriptionType
+    val type: SubscriptionType,
+    val qiwiBillId: String?,
+    val payTyp: PayType
 )
 
 enum class SubscriptionStatementStatus(val text: String) {
@@ -94,6 +97,10 @@ fun DataSnapshot.mapSubscriptionStatement() : SubscriptionStatement? {
             numberCard = this.child("numberCard").value.toString(),
             status = enumValueOf(this.child("status").value.toString()),
             type = enumValueOf(this.child("type").value.toString()),
+            payTyp = enumValueOf<PayType>(this.child("payTyp").value.toString()),
+            qiwiBillId = if(this.child("qiwiBillId").value != null)
+                this.child("qiwiBillId").value.toString()
+            else null
         )
     }catch (e:Exception){
         null

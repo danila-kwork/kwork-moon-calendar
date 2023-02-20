@@ -1,16 +1,18 @@
 package ru.mooncalendar.screens
 
 import android.widget.Toast
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import ru.mooncalendar.common.copyToClipboard
 import ru.mooncalendar.data.auth.AuthRepository
 import ru.mooncalendar.data.auth.model.User
 import ru.mooncalendar.data.subscriptionStatement.SubscriptionStatementRepository
@@ -64,7 +66,14 @@ fun SubscriptionStatementScreen(
 
                     Text(
                         text = "номер карты ${it.numberCard}",
-                        modifier = Modifier.padding(5.dp),
+                        modifier = Modifier.padding(5.dp)
+                            .clickable {
+                                context.copyToClipboard(user!!.email)
+
+                                Toast
+                                    .makeText(context,"номер карты скопирована", Toast.LENGTH_SHORT)
+                                    .show()
+                            },
                         color = primaryText()
                     )
 
@@ -77,7 +86,15 @@ fun SubscriptionStatementScreen(
                     if(user != null){
                         Text(
                             text = "email ${user!!.email}",
-                            modifier = Modifier.padding(5.dp),
+                            modifier = Modifier
+                                .padding(5.dp)
+                                .clickable {
+                                    context.copyToClipboard(user!!.email)
+
+                                    Toast
+                                        .makeText(context,"email скопирован", Toast.LENGTH_SHORT)
+                                        .show()
+                                },
                             color = primaryText()
                         )
                     }else {
@@ -100,6 +117,15 @@ fun SubscriptionStatementScreen(
                         }
                     }
 
+                    Text(
+                        text = it.payTyp.name,
+                        modifier = Modifier
+                            .padding(5.dp)
+                            .fillMaxWidth(),
+                        color = tintColor,
+                        textAlign = TextAlign.End
+                    )
+
                     Button(
                         modifier = Modifier.padding(5.dp),
                         shape = AbsoluteRoundedCornerShape(15.dp),
@@ -111,9 +137,6 @@ fun SubscriptionStatementScreen(
                                 subscriptionStatement = it.apply { status = SubscriptionStatementStatus.PAID },
                                 onSuccess = {
                                     Toast.makeText(context, "Успешно !", Toast.LENGTH_SHORT).show()
-                                    subscriptionStatementRepository.getAll({
-                                        subscriptionStatement = it
-                                    },{})
                                 },
                                 onFailure = {
                                     Toast.makeText(context, it, Toast.LENGTH_SHORT).show()

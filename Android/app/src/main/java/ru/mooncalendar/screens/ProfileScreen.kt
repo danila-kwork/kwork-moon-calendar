@@ -2,17 +2,16 @@ package ru.mooncalendar.screens
 
 import android.annotation.SuppressLint
 import android.widget.Toast
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -21,10 +20,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import kotlinx.coroutines.launch
 import ru.mooncalendar.common.extension.parseToBaseDateFormat
+import ru.mooncalendar.common.openBrowser
 import ru.mooncalendar.data.auth.AuthRepository
 import ru.mooncalendar.data.auth.model.User
 import ru.mooncalendar.data.auth.model.UserRole
+import ru.mooncalendar.data.qiwi.QiwiApi
+import ru.mooncalendar.data.qiwi.model.Amount
+import ru.mooncalendar.data.qiwi.model.InvoicingBody
+import ru.mooncalendar.data.qiwi.model.InvoicingResponse
+import ru.mooncalendar.data.qiwi.model.QiwiStatus
+import ru.mooncalendar.data.qiwi.retrofit
 import ru.mooncalendar.data.subscriptionStatement.SubscriptionStatementRepository
 import ru.mooncalendar.data.subscriptionStatement.model.SubscriptionStatement
 import ru.mooncalendar.data.subscriptionStatement.model.SubscriptionStatementStatus
@@ -32,11 +39,16 @@ import ru.mooncalendar.data.subscriptionStatement.model.SubscriptionType
 import ru.mooncalendar.data.subscriptionStatement.model.subscriptionTableRows
 import ru.mooncalendar.ui.theme.primaryBackground
 import ru.mooncalendar.ui.theme.primaryText
-import ru.mooncalendar.ui.theme.secondaryBackground
 import ru.mooncalendar.ui.theme.tintColor
 import ru.mooncalendar.ui.view.BaseLottieAnimation
 import ru.mooncalendar.ui.view.LottieAnimationType
 import ru.mooncalendar.ui.view.TableCell
+import java.util.*
+
+enum class PayType {
+    QIWI,
+    KASPI
+}
 
 @SuppressLint("NewApi", "UnusedMaterialScaffoldPaddingParameter")
 @Composable
@@ -48,6 +60,7 @@ fun ProfileScreen(
     val screenWidthDp = LocalConfiguration.current.screenWidthDp
     val screenHeightDp = LocalConfiguration.current.screenHeightDp
 
+    val scope = rememberCoroutineScope()
     val systemUiController = rememberSystemUiController()
     val primaryBackground = primaryBackground()
 
@@ -55,6 +68,8 @@ fun ProfileScreen(
     var subscriptionStatement by remember { mutableStateOf<SubscriptionStatement?>(null) }
     val authRepository = remember(::AuthRepository)
     val subscriptionStatementRepository = remember(::SubscriptionStatementRepository)
+    val qiwiApi = remember(::retrofit)
+    var qiwiStatus by remember { mutableStateOf<QiwiStatus?>(QiwiStatus.WAITING) }
 
     LaunchedEffect(key1 = Unit, block = {
         systemUiController.setStatusBarColor(
@@ -97,11 +112,14 @@ fun ProfileScreen(
                 item {
                     if(user?.isSubscription(subscriptionStatement, statusCheck = false) == false) {
                         Subscriptions(
-                            onSubscription = { numberCard, type ->
+                            qiwiApi = qiwiApi,
+                            onSubscription = { numberCard, payTyp, qiwiBillId, type ->
                                 subscriptionStatementRepository.create(
                                     SubscriptionStatement(
                                         numberCard = numberCard,
-                                        type = type
+                                        type = type,
+                                        payTyp = payTyp,
+                                        qiwiBillId = qiwiBillId
                                     ),
                                     {
                                         subscriptionStatementRepository.getByUserId(
@@ -139,38 +157,121 @@ fun ProfileScreen(
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                     verticalArrangement = Arrangement.Center
                                 ) {
-                                    BaseLottieAnimation(
-                                        type = LottieAnimationType.SUBSCRIPTION,
-                                        modifier = Modifier
-                                            .width(screenWidthDp.dp)
-                                            .height((screenHeightDp / 3).dp)
-                                            .padding(5.dp)
-                                    )
+                                    Spacer(modifier = Modifier.height(15.dp))
 
-                                    Text(
-                                        text = "Перейдите по ссылке и оплатите подписку " +
-                                                "${subscriptionStatement!!.type.price.first} тенге\n" +
-                                                "После ждите подвержения оплаты\n" +
-                                                "Подверждения прийдет в течения трех дней",
-                                        color = primaryText(),
-                                        fontWeight = FontWeight.W900,
-                                        modifier = Modifier.padding(5.dp),
-                                        textAlign = TextAlign.Center
-                                    )
+                                    when(subscriptionStatement!!.payTyp){
+                                        PayType.QIWI -> {
+                                            Text(
+                                                text = "${subscriptionStatement!!.status.text} подписке '${subscriptionStatement!!.type.title}'," +
+                                                        " статус оплаты '${qiwiStatus?.name}'",
+                                                color = primaryText(),
+                                                fontWeight = FontWeight.W900,
+                                                modifier = Modifier.padding(5.dp),
+                                                textAlign = TextAlign.Center
+                                            )
 
-                                    Button(
-                                        modifier = Modifier.padding(5.dp),
-                                        shape = AbsoluteRoundedCornerShape(10.dp),
-                                        colors = ButtonDefaults.buttonColors(
-                                            backgroundColor = tintColor
-                                        ),
-                                        onClick = {  }
-                                    ) {
-                                        Text(
-                                            text = "Перейти по ссылке",
-                                            color = primaryText()
-                                        )
+                                            Button(
+                                                modifier = Modifier.padding(5.dp),
+                                                shape = AbsoluteRoundedCornerShape(10.dp),
+                                                colors = ButtonDefaults.buttonColors(
+                                                    backgroundColor = tintColor
+                                                ),
+                                                onClick = {
+                                                    scope.launch {
+                                                        try {
+                                                            val response =
+                                                                qiwiApi.getStatus(subscriptionStatement!!.qiwiBillId!!)
+
+                                                            qiwiStatus = response.status.value
+
+                                                            if(qiwiStatus == QiwiStatus.PAID){
+                                                                subscriptionStatementRepository.update(
+                                                                    subscriptionStatement!!.apply { status = SubscriptionStatementStatus.PAID },
+                                                                    onSuccess = {
+                                                                        authRepository.getUser(
+                                                                            onSuccess = {
+                                                                                user = it
+                                                                            }
+                                                                        )
+                                                                    },
+                                                                    onFailure = {}
+                                                                )
+                                                            }
+
+                                                        }catch(e:Exception) {
+
+                                                        }
+                                                    }
+                                                }
+                                            ) {
+                                                Text(
+                                                    text = "Проверить статус подписке",
+                                                    color = primaryText()
+                                                )
+                                            }
+                                        }
+                                        PayType.KASPI -> {
+                                            Text(
+                                                text = "Перейдите по ссылке и оплатите подписку " +
+                                                        "${subscriptionStatement!!.type.price.first} тенге\n" +
+                                                        "После ждите подвержения оплаты\n" +
+                                                        "Подверждения прийдет в течения трех дней",
+                                                color = primaryText(),
+                                                fontWeight = FontWeight.W900,
+                                                modifier = Modifier.padding(5.dp),
+                                                textAlign = TextAlign.Center
+                                            )
+
+                                            Button(
+                                                modifier = Modifier.padding(5.dp),
+                                                shape = AbsoluteRoundedCornerShape(10.dp),
+                                                colors = ButtonDefaults.buttonColors(
+                                                    backgroundColor = tintColor
+                                                ),
+                                                onClick = {
+                                                    context.openBrowser("https://pay.kaspi.kz/pay/7dthiaop")
+                                                }
+                                            ) {
+                                                Text(
+                                                    text = "Перейти по ссылке",
+                                                    color = primaryText()
+                                                )
+                                            }
+                                        }
                                     }
+
+                                    Subscriptions(
+                                        qiwiApi = qiwiApi,
+                                        onSubscription = { numberCard, payTyp, qiwiBillId, type ->
+                                            subscriptionStatementRepository.create(
+                                                SubscriptionStatement(
+                                                    numberCard = numberCard,
+                                                    type = type,
+                                                    payTyp = payTyp,
+                                                    qiwiBillId = qiwiBillId
+                                                ),
+                                                {
+                                                    subscriptionStatementRepository.getByUserId(
+                                                        onSuccess = { subscriptionStatement = it },
+                                                        onFailure = {}
+                                                    )
+
+                                                    authRepository.subscription({},{})
+                                                },
+                                                {
+                                                    Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+                                                }
+                                            )
+                                            authRepository.subscription(
+                                                onSuccess = {
+                                                    authRepository.getUser(onSuccess = { user = it })
+                                                },
+                                                onFailure = {
+                                                    Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+                                                }
+                                            )
+                                        }
+                                    )
                                 }
                             }
                             SubscriptionStatementStatus.PAID -> {
@@ -206,11 +307,14 @@ fun ProfileScreen(
                             }
                             null -> {
                                 Subscriptions(
-                                    onSubscription = { numberCard, type ->
+                                    qiwiApi = qiwiApi,
+                                    onSubscription = { numberCard, payTyp, qiwiBillId, type ->
                                         subscriptionStatementRepository.create(
                                             SubscriptionStatement(
                                                 numberCard = numberCard,
-                                                type = type
+                                                type = type,
+                                                payTyp = payTyp,
+                                                qiwiBillId = qiwiBillId
                                             ),
                                             {
                                                 subscriptionStatementRepository.getByUserId(
@@ -251,8 +355,11 @@ fun ProfileScreen(
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun Subscriptions(
+    qiwiApi: QiwiApi,
     onSubscription: (
-        numberCard: String,
+        numberCard: String?,
+        payTyp: PayType,
+        qiwiBillId: String?,
         type: SubscriptionType
     ) -> Unit
 ) {
@@ -267,11 +374,13 @@ fun Subscriptions(
 
     if(subscriptionType != null){
         BayDialog(
+            qiwiApi = qiwiApi,
+            subscriptionType = subscriptionType!!,
             onDismissRequest = {
                 subscriptionType = null
             },
-            onSubscription = {
-                onSubscription(it, subscriptionType!!)
+            onSubscription = { numberCard, payTyp, qiwiBillId ->
+                onSubscription(numberCard, payTyp, qiwiBillId, subscriptionType!!)
                 subscriptionType = null
             }
         )
@@ -379,10 +488,35 @@ fun Subscriptions(
 
 @Composable
 private fun BayDialog(
+    qiwiApi: QiwiApi,
+    subscriptionType: SubscriptionType,
     onDismissRequest: () -> Unit,
-    onSubscription: (numberCard: String) -> Unit
+    onSubscription: (
+        numberCard: String?,
+        payTyp: PayType,
+        qiwiBillId: String?
+    ) -> Unit
 ) {
+    val context = LocalContext.current
+
     var numberCard by remember { mutableStateOf("") }
+    var qiwiBillId by remember { mutableStateOf("") }
+    var payTyp by remember { mutableStateOf(PayType.QIWI) }
+    var invoicingResponse by remember { mutableStateOf<InvoicingResponse?>(null) }
+
+    LaunchedEffect(key1 = Unit, block = {
+        try {
+            qiwiBillId = UUID.randomUUID().toString()
+
+            val response = qiwiApi.invoicing(qiwiBillId, InvoicingBody(
+                amount = Amount(value = subscriptionType.price.first.toFloat())
+            ))
+
+            invoicingResponse = response.body()
+        }catch (e:Exception){
+            println(e)
+        }
+    })
 
     Dialog(
         onDismissRequest = onDismissRequest
@@ -390,43 +524,112 @@ private fun BayDialog(
         Column(
             modifier = Modifier
                 .background(primaryBackground())
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .height(300.dp)
+                .clip(AbsoluteRoundedCornerShape(20.dp)),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            OutlinedTextField(
-                value = numberCard,
-                onValueChange = { numberCard = it },
-                modifier = Modifier.padding(5.dp),
-                label = { Text(text = "Номер карты", color = primaryText()) },
-                shape = AbsoluteRoundedCornerShape(10.dp),
-                colors = TextFieldDefaults.outlinedTextFieldColors(
-                    backgroundColor = primaryBackground(),
-                    textColor = primaryText()
-                )
-            )
-
-            Spacer(modifier = Modifier.padding(10.dp))
-
-            Button(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        horizontal = 20.dp,
-                        vertical = 10.dp
-                    ),
-                colors = ButtonDefaults.buttonColors(
-                    backgroundColor = tintColor
-                ),
-                shape = AbsoluteRoundedCornerShape(10.dp),
-                onClick = {
-                    if(numberCard.isNotEmpty())
-                        onSubscription(numberCard)
-                }
+            TabRow(
+                selectedTabIndex = payTyp.ordinal,
+                backgroundColor = primaryBackground(),
+                contentColor = tintColor
             ) {
-                Text(
-                    text = "Оформить подписку",
-                    color = primaryText()
-                )
+                PayType.values().forEach {
+                    Tab(
+                        selected = payTyp == it,
+                        onClick = { payTyp = it },
+                        text = {
+                            Text(
+                                text = it.name.lowercase(),
+                                color = primaryText()
+                            )
+                        }
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            when(payTyp){
+                PayType.QIWI -> {
+                    if(invoicingResponse == null){
+                        CircularProgressIndicator(color = tintColor)
+                    }else {
+
+                        Text(
+                            text = "Подписка ${subscriptionType.title}",
+                            textAlign = TextAlign.Center,
+                            fontWeight = FontWeight.W900,
+                            modifier = Modifier.padding(5.dp)
+                        )
+
+                        Text(
+                            text = "Перейдите по ссылке и оплатите подписку,\nпосле оплаты подписка активируеться",
+                            textAlign = TextAlign.Center,
+                            fontWeight = FontWeight.W300,
+                            modifier = Modifier.padding(5.dp)
+                        )
+
+                        Button(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(
+                                    horizontal = 20.dp,
+                                    vertical = 10.dp
+                                ),
+                            colors = ButtonDefaults.buttonColors(
+                                backgroundColor = tintColor
+                            ),
+                            shape = AbsoluteRoundedCornerShape(10.dp),
+                            onClick = {
+                                onSubscription(null, payTyp, qiwiBillId)
+                                context.openBrowser(invoicingResponse!!.payUrl)
+                            }
+                        ) {
+                            Text(
+                                text = "Оплатить",
+                                color = primaryText()
+                            )
+                        }
+                    }
+                }
+                PayType.KASPI -> {
+                    OutlinedTextField(
+                        value = numberCard,
+                        onValueChange = { numberCard = it },
+                        modifier = Modifier.padding(5.dp),
+                        label = { Text(text = "Номер карты", color = primaryText()) },
+                        shape = AbsoluteRoundedCornerShape(10.dp),
+                        colors = TextFieldDefaults.outlinedTextFieldColors(
+                            backgroundColor = primaryBackground(),
+                            textColor = primaryText()
+                        )
+                    )
+
+                    Spacer(modifier = Modifier.padding(10.dp))
+
+                    Button(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(
+                                horizontal = 20.dp,
+                                vertical = 10.dp
+                            ),
+                        colors = ButtonDefaults.buttonColors(
+                            backgroundColor = tintColor
+                        ),
+                        shape = AbsoluteRoundedCornerShape(10.dp),
+                        onClick = {
+                            if(numberCard.isNotEmpty())
+                                onSubscription(numberCard, payTyp, null)
+                        }
+                    ) {
+                        Text(
+                            text = "Оформить подписку",
+                            color = primaryText()
+                        )
+                    }
+                }
             }
         }
     }
