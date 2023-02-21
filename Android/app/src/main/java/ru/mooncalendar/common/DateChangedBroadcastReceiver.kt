@@ -5,8 +5,8 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import kotlinx.coroutines.*
-import ru.mooncalendar.data.pedometer.Day
-import ru.mooncalendar.data.pedometer.MainDatabase
+import ru.mooncalendar.data.database.pedometer.Day
+import ru.mooncalendar.data.database.MainDatabase
 import java.util.*
 
 class DateChangedBroadcastReceiver : BroadcastReceiver() {

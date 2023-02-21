@@ -21,9 +21,9 @@ import androidx.compose.ui.window.Dialog
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import kotlinx.coroutines.launch
-import ru.mooncalendar.data.pedometer.Day
-import ru.mooncalendar.data.pedometer.Goal
-import ru.mooncalendar.data.pedometer.MainDatabase
+import ru.mooncalendar.data.database.MainDatabase
+import ru.mooncalendar.data.database.pedometer.Day
+import ru.mooncalendar.data.database.pedometer.Goal
 import ru.mooncalendar.ui.theme.primaryBackground
 import ru.mooncalendar.ui.theme.primaryText
 import ru.mooncalendar.ui.theme.secondaryBackground

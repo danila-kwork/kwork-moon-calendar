@@ -11,8 +11,8 @@ import android.os.IBinder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import ru.mooncalendar.data.pedometer.DayDao
-import ru.mooncalendar.data.pedometer.MainDatabase
+import ru.mooncalendar.data.database.pedometer.DayDao
+import ru.mooncalendar.data.database.MainDatabase
 
 
 class StepsSensorService : Service(), SensorEventListener {

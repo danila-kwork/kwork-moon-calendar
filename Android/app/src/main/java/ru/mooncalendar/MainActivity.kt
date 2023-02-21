@@ -1,7 +1,6 @@
 package ru.mooncalendar
 
 import android.annotation.SuppressLint
-import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -51,11 +50,11 @@ class MainActivity : ComponentActivity() {
                 var bottomBar by remember { mutableStateOf(BottomBar.CALENDAR) }
 
                 val systemUiController = rememberSystemUiController()
-                val primaryBackground = primaryBackground()
+                val secondaryBackground = secondaryBackground()
 
                 LaunchedEffect(key1 = Unit, block = {
                     systemUiController.setNavigationBarColor(
-                        color = primaryBackground
+                        color = secondaryBackground
                     )
                 })
 

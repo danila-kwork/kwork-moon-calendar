@@ -17,11 +17,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import kotlinx.coroutines.launch
-import ru.mooncalendar.common.extension.parseToBaseDateFormat
+import ru.mooncalendar.common.extension.parseToBaseUiDateFormat
 import ru.mooncalendar.common.openBrowser
 import ru.mooncalendar.data.auth.AuthRepository
 import ru.mooncalendar.data.auth.model.User
@@ -278,7 +277,7 @@ fun ProfileScreen(
 
                                 val debitingFundsDate = user!!.debitingFundsDate(
                                     subscriptionStatement!!.type
-                                )?.parseToBaseDateFormat()
+                                )?.parseToBaseUiDateFormat()
 
                                 Column(
                                     modifier = Modifier.fillMaxSize(),
@@ -518,57 +517,97 @@ private fun BayDialog(
         }
     })
 
-    Dialog(
-        onDismissRequest = onDismissRequest
-    ){
-        Column(
-            modifier = Modifier
-                .background(primaryBackground())
-                .fillMaxWidth()
-                .height(300.dp)
-                .clip(AbsoluteRoundedCornerShape(20.dp)),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            TabRow(
-                selectedTabIndex = payTyp.ordinal,
-                backgroundColor = primaryBackground(),
-                contentColor = tintColor
+    AlertDialog(
+        onDismissRequest = onDismissRequest,
+        shape = AbsoluteRoundedCornerShape(20.dp),
+        backgroundColor = primaryBackground(),
+        buttons = {
+            Column(
+                modifier = Modifier
+                    .background(primaryBackground())
+                    .fillMaxWidth()
+                    .height(300.dp)
+                    .clip(AbsoluteRoundedCornerShape(20.dp)),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                PayType.values().forEach {
-                    Tab(
-                        selected = payTyp == it,
-                        onClick = { payTyp = it },
-                        text = {
-                            Text(
-                                text = it.name.lowercase(),
-                                color = primaryText()
-                            )
-                        }
-                    )
+                TabRow(
+                    selectedTabIndex = payTyp.ordinal,
+                    backgroundColor = primaryBackground(),
+                    contentColor = tintColor
+                ) {
+                    PayType.values().forEach {
+                        Tab(
+                            selected = payTyp == it,
+                            onClick = { payTyp = it },
+                            text = {
+                                Text(
+                                    text = it.name.lowercase(),
+                                    color = primaryText()
+                                )
+                            }
+                        )
+                    }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(20.dp))
 
-            when(payTyp){
-                PayType.QIWI -> {
-                    if(invoicingResponse == null){
-                        CircularProgressIndicator(color = tintColor)
-                    }else {
+                when(payTyp){
+                    PayType.QIWI -> {
+                        if(invoicingResponse == null){
+                            CircularProgressIndicator(color = tintColor)
+                        }else {
 
-                        Text(
-                            text = "Подписка ${subscriptionType.title}",
-                            textAlign = TextAlign.Center,
-                            fontWeight = FontWeight.W900,
-                            modifier = Modifier.padding(5.dp)
+                            Text(
+                                text = "Подписка ${subscriptionType.title}",
+                                textAlign = TextAlign.Center,
+                                fontWeight = FontWeight.W900,
+                                modifier = Modifier.padding(5.dp)
+                            )
+
+                            Text(
+                                text = "Перейдите по ссылке и оплатите подписку,\nпосле оплаты подписка активируеться",
+                                textAlign = TextAlign.Center,
+                                fontWeight = FontWeight.W300,
+                                modifier = Modifier.padding(5.dp)
+                            )
+
+                            Button(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(
+                                        horizontal = 20.dp,
+                                        vertical = 10.dp
+                                    ),
+                                colors = ButtonDefaults.buttonColors(
+                                    backgroundColor = tintColor
+                                ),
+                                shape = AbsoluteRoundedCornerShape(10.dp),
+                                onClick = {
+                                    onSubscription(null, payTyp, qiwiBillId)
+                                    context.openBrowser(invoicingResponse!!.payUrl)
+                                }
+                            ) {
+                                Text(
+                                    text = "Оплатить",
+                                    color = primaryText()
+                                )
+                            }
+                        }
+                    }
+                    PayType.KASPI -> {
+                        OutlinedTextField(
+                            value = numberCard,
+                            onValueChange = { numberCard = it },
+                            modifier = Modifier.padding(5.dp),
+                            label = { Text(text = "Номер карты", color = primaryText()) },
+                            shape = AbsoluteRoundedCornerShape(10.dp),
+                            colors = TextFieldDefaults.outlinedTextFieldColors(
+                                backgroundColor = primaryBackground(),
+                                textColor = primaryText()
+                            )
                         )
 
-                        Text(
-                            text = "Перейдите по ссылке и оплатите подписку,\nпосле оплаты подписка активируеться",
-                            textAlign = TextAlign.Center,
-                            fontWeight = FontWeight.W300,
-                            modifier = Modifier.padding(5.dp)
-                        )
+                        Spacer(modifier = Modifier.padding(10.dp))
 
                         Button(
                             modifier = Modifier
@@ -582,55 +621,18 @@ private fun BayDialog(
                             ),
                             shape = AbsoluteRoundedCornerShape(10.dp),
                             onClick = {
-                                onSubscription(null, payTyp, qiwiBillId)
-                                context.openBrowser(invoicingResponse!!.payUrl)
+                                if(numberCard.isNotEmpty())
+                                    onSubscription(numberCard, payTyp, null)
                             }
                         ) {
                             Text(
-                                text = "Оплатить",
+                                text = "Оформить подписку",
                                 color = primaryText()
                             )
                         }
                     }
                 }
-                PayType.KASPI -> {
-                    OutlinedTextField(
-                        value = numberCard,
-                        onValueChange = { numberCard = it },
-                        modifier = Modifier.padding(5.dp),
-                        label = { Text(text = "Номер карты", color = primaryText()) },
-                        shape = AbsoluteRoundedCornerShape(10.dp),
-                        colors = TextFieldDefaults.outlinedTextFieldColors(
-                            backgroundColor = primaryBackground(),
-                            textColor = primaryText()
-                        )
-                    )
-
-                    Spacer(modifier = Modifier.padding(10.dp))
-
-                    Button(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(
-                                horizontal = 20.dp,
-                                vertical = 10.dp
-                            ),
-                        colors = ButtonDefaults.buttonColors(
-                            backgroundColor = tintColor
-                        ),
-                        shape = AbsoluteRoundedCornerShape(10.dp),
-                        onClick = {
-                            if(numberCard.isNotEmpty())
-                                onSubscription(numberCard, payTyp, null)
-                        }
-                    ) {
-                        Text(
-                            text = "Оформить подписку",
-                            color = primaryText()
-                        )
-                    }
-                }
             }
         }
-    }
+    )
 }

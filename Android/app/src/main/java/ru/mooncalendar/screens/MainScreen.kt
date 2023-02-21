@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
@@ -18,25 +20,33 @@ import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import ru.mooncalendar.R
 import ru.mooncalendar.common.extension.parseToBaseDateFormat
+import ru.mooncalendar.common.extension.parseToBaseUiDateFormat
 import ru.mooncalendar.common.extension.toDate
 import ru.mooncalendar.common.extension.toLocalDate
 import ru.mooncalendar.data.auth.AuthRepository
 import ru.mooncalendar.data.auth.model.User
 import ru.mooncalendar.data.auth.model.getAdvice
+import ru.mooncalendar.data.database.MainDatabase
+import ru.mooncalendar.data.database.notes.Note
 import ru.mooncalendar.data.moonCalendar.MoonCalendarRepository
 import ru.mooncalendar.data.moonCalendar.model.MoonCalendar
 import ru.mooncalendar.data.moonCalendar.model.getDayText
@@ -67,19 +77,23 @@ fun MainScreen(
     dateString: String? = null
 ) {
     val context = LocalContext.current
+    val owner = LocalLifecycleOwner.current
     val screenWidthDp = LocalConfiguration.current.screenWidthDp
     val screenHeightDp = LocalConfiguration.current.screenHeightDp
 
+    val scope = rememberCoroutineScope()
     val moonCalendarRepository = remember { MoonCalendarRepository() }
     val authRepository = remember { AuthRepository() }
+    val noteDao = remember(MainDatabase.getInstance(context)::noteDao)
     val subscriptionStatementRepository = remember(::SubscriptionStatementRepository)
     var moonCalendar by remember { mutableStateOf<List<MoonCalendar>>(emptyList()) }
     var subscriptionStatement by remember { mutableStateOf<SubscriptionStatement?>(null) }
-
+    var noteDescEditDialog by remember { mutableStateOf(false) }
     var tab by remember { mutableStateOf(Tab.DESCRIPTION) }
 
     var date by remember { mutableStateOf(Date()) }
     var user by remember { mutableStateOf<User?>(null) }
+    var note by remember { mutableStateOf<Note?>(null) }
 
     val systemUiController = rememberSystemUiController()
     val primaryBackground = primaryBackground()
@@ -89,6 +103,10 @@ fun MainScreen(
     var pedometerTabVisibility by remember { mutableStateOf(false) }
     var myYearTabVisibility by remember { mutableStateOf(false) }
     var myMonthTabVisibility by remember { mutableStateOf(false) }
+
+    noteDao.getByDate(date = date.parseToBaseDateFormat()).observe(owner){
+        note = it
+    }
 
     LaunchedEffect(user, subscriptionStatement) {
         delay(1000L)
@@ -144,6 +162,25 @@ fun MainScreen(
             modifier = Modifier.fillMaxSize(),
             color = primaryBackground()
         ) {
+            if(noteDescEditDialog){
+                NoteDescEdit(
+                    currentDesc = note?.description ?: "",
+                    onDismissRequest = { noteDescEditDialog = false },
+                    editDesc = { desc ->
+                        scope.launch {
+                            noteDao.upsert(
+                                Note(
+                                    date = date.parseToBaseDateFormat(),
+                                    description = desc
+                                )
+                            )
+
+                            noteDescEditDialog = false
+                        }
+                    }
+                )
+            }
+
             LazyColumn {
 
                 item {
@@ -231,7 +268,7 @@ fun MainScreen(
                         }
 
                         Text(
-                            text = date.parseToBaseDateFormat(),
+                            text = date.parseToBaseUiDateFormat(),
                             fontWeight = FontWeight.W900,
                             modifier = Modifier.padding(5.dp)
                         )
@@ -343,12 +380,46 @@ fun MainScreen(
                                 ),
                                 color = primaryText()
                             )
+
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(10.dp),
+                                shape = AbsoluteRoundedCornerShape(15.dp),
+                                backgroundColor = tintColor,
+                                onClick = {
+                                    noteDescEditDialog = true
+                                }
+                            ) {
+                                Text(
+                                    text = note?.description ?: "Что вы ощущаете и какие у вас отношения с окружающими в этот день",
+                                    color = primaryText(),
+                                    modifier = Modifier.padding(10.dp)
+                                )
+                            }
                         }
                         Tab.PEDOMETER -> PedometerScreen(
                             date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(date)
                         )
                         Tab.MY_MONTH -> {
+                            if(user != null){
 
+                                val localDate = date.toLocalDate()
+
+                                Text(
+                                    text = user!!.getMyMonth(
+                                        localDate.year,
+                                        localDate.month.value
+                                    ).second,
+                                    modifier = Modifier.padding(
+                                        vertical = 5.dp,
+                                        horizontal = 15.dp
+                                    ),
+                                    color = primaryText()
+                                )
+
+                                Spacer(modifier = Modifier.height(5.dp))
+                            }
                         }
                     }
 
@@ -387,4 +458,45 @@ fun TabItem(
             )
         }
     }
+}
+
+@Composable
+private fun NoteDescEdit(
+    currentDesc: String,
+    onDismissRequest: () -> Unit,
+    editDesc: (String) -> Unit
+) {
+    var desc by remember { mutableStateOf("") }
+    val textFieldFocusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(key1 = Unit, block = {
+        textFieldFocusRequester.requestFocus()
+        desc = currentDesc
+    })
+
+    AlertDialog(
+        onDismissRequest = onDismissRequest,
+        backgroundColor = primaryBackground(),
+        shape = AbsoluteRoundedCornerShape(15.dp),
+        buttons = {
+            OutlinedTextField(
+                modifier = Modifier
+                    .padding(5.dp)
+                    .heightIn(min = 150.dp)
+                    .focusRequester(textFieldFocusRequester),
+                value = desc,
+                onValueChange = { desc = it },
+                colors = TextFieldDefaults.textFieldColors(
+                    backgroundColor = primaryBackground(),
+                    textColor = primaryText()
+                ),
+                keyboardOptions = KeyboardOptions(
+                    imeAction = ImeAction.Send
+                ),
+                keyboardActions = KeyboardActions(onSend = {
+                    editDesc(desc)
+                })
+            )
+        }
+    )
 }
