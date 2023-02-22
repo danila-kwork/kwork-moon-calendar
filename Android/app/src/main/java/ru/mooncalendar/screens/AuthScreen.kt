@@ -75,7 +75,7 @@ fun AuthScreen(
                     )
                 ) {
                     Text(
-                        text = "Авторезироваться",
+                        text = "Авторизация",
                         color = primaryText(),
                         modifier = Modifier.padding(5.dp)
                     )
@@ -94,7 +94,7 @@ fun AuthScreen(
                     }
                 ) {
                     Text(
-                        text = "Зарегестрироваться",
+                        text = "Зарегистрироваться",
                         color = primaryText(),
                         modifier = Modifier.padding(5.dp)
                     )
@@ -231,7 +231,7 @@ fun SignOn(
                     )
                 ) {
                     Text(
-                        text = "Зарегестрироваться",
+                        text = "Зарегистрироваться",
                         color = primaryText(),
                         modifier = Modifier.padding(5.dp)
                     )
@@ -342,7 +342,7 @@ fun SignIn(
                     )
                 ) {
                     Text(
-                        text = "Авторезироваться",
+                        text = "Авторизация",
                         color = primaryText(),
                         modifier = Modifier.padding(5.dp)
                     )

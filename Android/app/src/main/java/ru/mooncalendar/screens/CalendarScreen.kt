@@ -3,21 +3,28 @@ package ru.mooncalendar.screens
 import android.annotation.SuppressLint
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import io.github.boguszpawlowski.composecalendar.SelectableCalendar
 import io.github.boguszpawlowski.composecalendar.day.DayState
+import io.github.boguszpawlowski.composecalendar.header.MonthState
 import io.github.boguszpawlowski.composecalendar.rememberSelectableCalendarState
 import io.github.boguszpawlowski.composecalendar.selection.SelectionMode
 import io.github.boguszpawlowski.composecalendar.selection.SelectionState
@@ -29,6 +36,7 @@ import ru.mooncalendar.ui.theme.primaryText
 import ru.mooncalendar.ui.theme.tintColor
 import java.text.SimpleDateFormat
 import java.time.LocalDate
+import java.time.format.TextStyle
 import java.util.*
 
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
@@ -89,6 +97,9 @@ fun CalendarScreen(
                         calendarState = state,
                         dayContent = {
                             DefaultDay(state = it)
+                        },
+                        monthHeader = {
+                            DefaultMonthHeader(it)
                         }
                     )
 
@@ -120,7 +131,7 @@ fun CalendarScreen(
                                 .padding(5.dp)
                                 .size(45.dp),
                             shape = AbsoluteRoundedCornerShape(90.dp),
-                            backgroundColor = Color.Gray
+                            backgroundColor = Color.Yellow
                         ) {}
 
                         Text(
@@ -181,7 +192,7 @@ private fun <T : SelectionState> DefaultDay(
         backgroundColor = if(advice.size == 1){
             advice.last().state.color
         }else {
-            Color.Gray
+            Color.Yellow
         }
     ) {
         Box(
@@ -192,6 +203,51 @@ private fun <T : SelectionState> DefaultDay(
             contentAlignment = Alignment.Center,
         ) {
             Text(text = date.dayOfMonth.toString())
+        }
+    }
+}
+
+@SuppressLint("NewApi")
+@Composable
+fun DefaultMonthHeader(
+    monthState: MonthState,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        IconButton(
+            modifier = Modifier.testTag("Decrement"),
+            onClick = { monthState.currentMonth = monthState.currentMonth.minusMonths(1) }
+        ) {
+            Image(
+                imageVector = Icons.Default.KeyboardArrowLeft,
+                colorFilter = ColorFilter.tint(MaterialTheme.colors.onSurface),
+                contentDescription = "Previous",
+            )
+        }
+
+        Text(
+            modifier = Modifier.testTag("MonthLabel"),
+            text = monthState.currentMonth.month
+                .getDisplayName(TextStyle.FULL_STANDALONE, Locale.getDefault())
+                .lowercase()
+                .replaceFirstChar { it.titlecase() },
+            style = MaterialTheme.typography.h4,
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(text = monthState.currentMonth.year.toString(), style = MaterialTheme.typography.h4)
+        IconButton(
+            modifier = Modifier.testTag("Increment"),
+            onClick = { monthState.currentMonth = monthState.currentMonth.plusMonths(1) }
+        ) {
+            Image(
+                imageVector = Icons.Default.KeyboardArrowRight,
+                colorFilter = ColorFilter.tint(MaterialTheme.colors.onSurface),
+                contentDescription = "Next",
+            )
         }
     }
 }

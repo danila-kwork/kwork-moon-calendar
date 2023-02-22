@@ -27,7 +27,8 @@ import ru.mooncalendar.ui.theme.*
 
 enum class BottomBar(val text: String, val iconId: Int) {
     CALENDAR("Календарь", R.drawable.moon),
-    PREMIUM("Подписка", R.drawable.premium)
+    PREMIUM("Подписка", R.drawable.premium),
+    SETTINGS("Настройки", R.drawable.setting)
 }
 
 class MainActivity : ComponentActivity() {
@@ -79,6 +80,8 @@ class MainActivity : ComponentActivity() {
                                                     navController.navigate("auth_screen")
                                                 }
                                             }
+                                            BottomBar.SETTINGS ->
+                                                navController.navigate("settings_screen")
                                         }
                                     },
                                     label = {
@@ -155,6 +158,10 @@ class MainActivity : ComponentActivity() {
 
                             composable("subscription_statement_screen"){
                                 SubscriptionStatementScreen()
+                            }
+
+                            composable("settings_screen"){
+                                SettingsScreen()
                             }
                         }
                     )

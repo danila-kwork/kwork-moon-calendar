@@ -126,7 +126,9 @@ fun MainScreen(
 
     LaunchedEffect(key1 = moonCalendar.lastOrNull(), block = {
         moonCalendar.lastOrNull()?.let {
-            systemUiController.setStatusBarColor(it.moonCalendarColor())
+            systemUiController.setStatusBarColor(
+                Color(0xFF155F4E)//it.moonCalendarColor()
+            )
         }
     })
 
@@ -196,8 +198,8 @@ fun MainScreen(
                             modifier = Modifier
                                 .height((screenHeightDp / 8).dp)
                                 .width(screenWidthDp.dp),
-                            tint = moonCalendar.firstOrNull()?.moonCalendarColor()
-                                ?: LocalContentColor.current.copy(alpha = LocalContentAlpha.current)
+                            tint = Color(0xFF155F4E) //moonCalendar.firstOrNull()?.moonCalendarColor()
+                                //?: LocalContentColor.current.copy(alpha = LocalContentAlpha.current)
                         )
 
                         Row(
@@ -366,7 +368,6 @@ fun MainScreen(
                             Text(
                                 text = getDayText(date = date.toLocalDate()).second,
                                 modifier = Modifier.padding(
-                                    vertical = 5.dp,
                                     horizontal = 15.dp
                                 ),
                                 color = primaryText()
@@ -375,10 +376,17 @@ fun MainScreen(
                             Text(
                                 text = getRecommendations(date = date.toLocalDate()),
                                 modifier = Modifier.padding(
-                                    vertical = 5.dp,
+                                    vertical = 2.dp,
                                     horizontal = 15.dp
                                 ),
                                 color = primaryText()
+                            )
+
+                            Text(
+                                text = "Заметка",
+                                fontWeight = FontWeight.W900,
+                                modifier = Modifier.padding(horizontal = 15.dp, vertical = 3.dp),
+                                fontSize = 26.sp
                             )
 
                             Card(
@@ -392,7 +400,8 @@ fun MainScreen(
                                 }
                             ) {
                                 Text(
-                                    text = note?.description ?: "Что вы ощущаете и какие у вас отношения с окружающими в этот день",
+                                    text = note?.description
+                                        ?: "Пример текста: Что вы ощущаете и какие у вас отношения с окружающими в этот день?",
                                     color = primaryText(),
                                     modifier = Modifier.padding(10.dp)
                                 )
