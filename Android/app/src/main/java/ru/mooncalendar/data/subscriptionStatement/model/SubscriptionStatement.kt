@@ -28,21 +28,24 @@ enum class SubscriptionTime {
 enum class SubscriptionType(
     val title: String,
     val desc: String,
-    val price: Pair<Int, String>,
+    val priceRu: Pair<Int, String>,
+    val priceKz: Pair<Int, String>,
     val time: SubscriptionTime,
     val color: Color,
 ) {
     LITE_MIN(
         "Lite",
         "*благоприятные/нейтральные/неблагоприятные дни для заключения сделок, крупных покупок, принятия важных решений",
-        1200 to "тенге/месяц",
+        210 to "рублей/месяц", //1200
+        1200 to "тенге/месяц", //1200
         SubscriptionTime.ONE_MONTH,
         color = Color(0xFFCD7F32)
     ),
     LITE_MAX(
-        "Lite",
+        "Lite подписка на год",
         "*благоприятные/нейтральные/неблагоприятные дни для заключения сделок, крупных покупок, принятия важных решений",
-        8900 to "тенге/год\nВЫГОДА: до 40%!",
+        1500 to "рублей/год\nВЫГОДА: до 40%!", // 8900
+        8900 to "тенге/год\nВЫГОДА: до 40%!", // 8900
         SubscriptionTime.ONE_YEAR,
         color = Color(0xFFCD7F32)
     ),
@@ -55,12 +58,13 @@ enum class SubscriptionType(
             "* Шагомер\n" +
             "\n" +
             "* Рекомендации по личному году/месяцу",
-        2400 to "тенге/месяц",
+        402 to "рублей/месяц", //2400 тенге
+        2400 to "тенге/месяц", //2400 тенге
         SubscriptionTime.ONE_MONTH,
         color = Color(0xFFD8D8D8)
     ),
     SILVER_MAX(
-        "Silver",
+        "Silver подписка на год",
         "* ОБЩИЙ и ЛИЧНЫЙ календарь 2023 с благоприятными/нейтральными/неблагоприятными днями для заключения сделок, крупных покупок, принятия важных решений\n" +
                 "\n" +
                 "* Аффирмации на каждый день \n" +
@@ -68,6 +72,7 @@ enum class SubscriptionType(
                 "* Шагомер\n" +
                 "\n" +
                 "* Рекомендации по личному году/месяцу",
+        2670 to "рублей/год\nВЫГОДА: до 50%!",
         15900 to "тенге/год\nВЫГОДА: до 50%!",
         SubscriptionTime.ONE_YEAR,
         color = Color(0xFFD8D8D8)
@@ -83,6 +88,7 @@ enum class SubscriptionType(
             "* Рекомендации по личному году/месяцу\n" +
             "\n" +
             "* ЛИЧНАЯ КОНСУЛЬТАЦИЯ в два этапа от профессионального мастера Сюцай Лунары Канаш с полным разбором",
+        7044 to "рублей/месяц",
         42000 to "тенге/месяц",
         SubscriptionTime.UNLIMITED,
         color = Color(0xFFFED838)
@@ -116,7 +122,7 @@ data class SubscriptionTableRow(
 
 val subscriptionTableRows = listOf(
     SubscriptionTableRow(
-        text = "Регомендации",
+        text = "Рекомендации",
         liteSubscription = true,
         silverSubscription = true,
         goldSubscription = true,
@@ -129,6 +135,12 @@ val subscriptionTableRows = listOf(
     ),
     SubscriptionTableRow(
         text = "Личный год",
+        liteSubscription = false,
+        silverSubscription = true,
+        goldSubscription = true
+    ),
+    SubscriptionTableRow(
+        text = "Аффирмация",
         liteSubscription = false,
         silverSubscription = true,
         goldSubscription = true

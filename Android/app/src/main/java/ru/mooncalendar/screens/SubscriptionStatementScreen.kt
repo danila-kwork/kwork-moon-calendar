@@ -66,19 +66,24 @@ fun SubscriptionStatementScreen(
 
                     Text(
                         text = "номер карты ${it.numberCard}",
-                        modifier = Modifier.padding(5.dp)
+                        modifier = Modifier
+                            .padding(5.dp)
                             .clickable {
                                 context.copyToClipboard(user!!.email)
 
                                 Toast
-                                    .makeText(context,"номер карты скопирована", Toast.LENGTH_SHORT)
+                                    .makeText(
+                                        context,
+                                        "номер карты скопирована",
+                                        Toast.LENGTH_SHORT
+                                    )
                                     .show()
                             },
                         color = primaryText()
                     )
 
                     Text(
-                        text = "${it.type.price.first} ${it.type.price.second}",
+                        text = "${it.type.priceRu.first} ${it.type.priceRu.second}",
                         modifier = Modifier.padding(5.dp),
                         color = primaryText()
                     )
@@ -92,7 +97,7 @@ fun SubscriptionStatementScreen(
                                     context.copyToClipboard(user!!.email)
 
                                     Toast
-                                        .makeText(context,"email скопирован", Toast.LENGTH_SHORT)
+                                        .makeText(context, "email скопирован", Toast.LENGTH_SHORT)
                                         .show()
                                 },
                             color = primaryText()
@@ -152,6 +157,10 @@ fun SubscriptionStatementScreen(
 
                     Divider(color = tintColor)
                 }
+            }
+
+            item {
+                Spacer(modifier = Modifier.height(50.dp))
             }
         }
     }

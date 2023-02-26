@@ -90,7 +90,7 @@ fun ProfileScreen(
     })
 
     Scaffold(
-        backgroundColor = primaryBackground(),
+        backgroundColor = primaryBackground()
     ) {
         if(user != null){
             LazyColumn {
@@ -101,7 +101,7 @@ fun ProfileScreen(
                             navController.navigate("subscription_statement_screen")
                         }) {
                             Text(
-                                text = "Админ",
+                                text = "Заявки на выплаты (админ)",
                                 color = tintColor
                             )
                         }
@@ -210,11 +210,16 @@ fun ProfileScreen(
                                             }
                                         }
                                         PayType.KASPI -> {
+
+                                            val price = if(subscriptionStatement!!.payTyp == PayType.KASPI)
+                                                "${subscriptionStatement!!.type.priceKz.first} тенге"
+                                            else
+                                                "${subscriptionStatement!!.type.priceRu.first} рублей"
+
                                             Text(
                                                 text = "Перейдите по ссылке и оплатите подписку " +
-                                                        "${subscriptionStatement!!.type.price.first} тенге\n" +
-                                                        "После ждите подвержения оплаты\n" +
-                                                        "Подверждения прийдет в течения трех дней",
+                                                        "$price\n" +
+                                                        "Подтверждение в течение часа",
                                                 color = primaryText(),
                                                 fontWeight = FontWeight.W900,
                                                 modifier = Modifier.padding(5.dp),
@@ -341,6 +346,10 @@ fun ProfileScreen(
                         }
                     }
                 }
+
+                item {
+                    Spacer(modifier = Modifier.height(50.dp))
+                }
             }
         }else {
             BaseLottieAnimation(
@@ -412,7 +421,7 @@ fun Subscriptions(
                             )
 
                             Text(
-                                text = "${item.price.first} ${item.price.second}",
+                                text = "${item.priceRu.first} ${item.priceRu.second}",
                                 fontWeight = FontWeight.W900,
                                 modifier = Modifier.padding(10.dp),
                                 color = primaryText(),
@@ -508,7 +517,7 @@ private fun BayDialog(
             qiwiBillId = UUID.randomUUID().toString()
 
             val response = qiwiApi.invoicing(qiwiBillId, InvoicingBody(
-                amount = Amount(value = subscriptionType.price.first.toFloat())
+                amount = Amount(value = subscriptionType.priceRu.first.toFloat())
             ))
 
             invoicingResponse = response.body()
@@ -526,7 +535,7 @@ private fun BayDialog(
                 modifier = Modifier
                     .background(primaryBackground())
                     .fillMaxWidth()
-                    .height(300.dp)
+                    .height(320.dp)
                     .clip(AbsoluteRoundedCornerShape(20.dp)),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -558,7 +567,8 @@ private fun BayDialog(
                         }else {
 
                             Text(
-                                text = "Подписка ${subscriptionType.title}",
+                                text = "Подписка ${subscriptionType.title} " +
+                                        "${subscriptionType.priceRu.first} ${subscriptionType.priceRu.second}",
                                 textAlign = TextAlign.Center,
                                 fontWeight = FontWeight.W900,
                                 modifier = Modifier.padding(5.dp)
@@ -595,6 +605,15 @@ private fun BayDialog(
                         }
                     }
                     PayType.KASPI -> {
+
+                        Text(
+                            text = "Подписка ${subscriptionType.title} " +
+                                    "${subscriptionType.priceKz.first} ${subscriptionType.priceKz.second}",
+                            textAlign = TextAlign.Center,
+                            fontWeight = FontWeight.W900,
+                            modifier = Modifier.padding(5.dp)
+                        )
+
                         OutlinedTextField(
                             value = numberCard,
                             onValueChange = { numberCard = it },

@@ -30,6 +30,7 @@ import io.github.boguszpawlowski.composecalendar.selection.SelectionMode
 import io.github.boguszpawlowski.composecalendar.selection.SelectionState
 import ru.mooncalendar.common.extension.parseToBaseUiDateFormat
 import ru.mooncalendar.common.extension.toDate
+import ru.mooncalendar.data.auth.model.AdviceState
 import ru.mooncalendar.data.auth.model.getAdvice
 import ru.mooncalendar.ui.theme.primaryBackground
 import ru.mooncalendar.ui.theme.primaryText
@@ -175,10 +176,27 @@ private fun <T : SelectionState> DefaultDay(
 ) {
     val date = state.date
     val selectionState = state.selectionState
+    val day = date.dayOfMonth
 
     val isSelected = selectionState.isDateSelected(date)
 
     val advice = getAdvice(date).distinctBy { it.state }
+
+    val backgroundColor = when (day) {
+        10, 20, 30 -> Color.Red
+        3, 6, 8 -> Color.Green
+        else -> {
+            if(advice.size == 1){
+                when(advice.last().state){
+                    AdviceState.Adverse -> Color.Yellow
+                    AdviceState.Neutral -> Color.Yellow
+                    AdviceState.Favorable -> Color.Green
+                }
+            }else {
+                Color.Yellow
+            }
+        }
+    }
 
     Card(
         modifier = modifier
@@ -189,11 +207,7 @@ private fun <T : SelectionState> DefaultDay(
         contentColor = if (isSelected) selectionColor else contentColorFor(
             backgroundColor = MaterialTheme.colors.surface
         ),
-        backgroundColor = if(advice.size == 1){
-            advice.last().state.color
-        }else {
-            Color.Yellow
-        }
+        backgroundColor = backgroundColor
     ) {
         Box(
             modifier = Modifier.clickable {

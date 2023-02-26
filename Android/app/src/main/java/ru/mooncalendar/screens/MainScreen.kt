@@ -7,6 +7,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.widget.Toast
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -35,22 +36,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.ktx.Firebase
+import com.skydoves.cloudy.Cloudy
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import ru.mooncalendar.R
-import ru.mooncalendar.common.extension.parseToBaseDateFormat
-import ru.mooncalendar.common.extension.parseToBaseUiDateFormat
-import ru.mooncalendar.common.extension.toDate
-import ru.mooncalendar.common.extension.toLocalDate
+import ru.mooncalendar.common.extension.*
 import ru.mooncalendar.data.auth.AuthRepository
 import ru.mooncalendar.data.auth.model.User
 import ru.mooncalendar.data.auth.model.getAdvice
 import ru.mooncalendar.data.database.MainDatabase
 import ru.mooncalendar.data.database.notes.Note
+import ru.mooncalendar.data.info.Info
+import ru.mooncalendar.data.info.InfoRepository
 import ru.mooncalendar.data.moonCalendar.MoonCalendarRepository
-import ru.mooncalendar.data.moonCalendar.model.MoonCalendar
-import ru.mooncalendar.data.moonCalendar.model.getDayText
-import ru.mooncalendar.data.moonCalendar.model.getRecommendations
+import ru.mooncalendar.data.moonCalendar.model.*
 import ru.mooncalendar.data.subscriptionStatement.SubscriptionStatementRepository
 import ru.mooncalendar.data.subscriptionStatement.model.SubscriptionStatement
 import ru.mooncalendar.data.subscriptionStatement.model.SubscriptionType
@@ -62,7 +63,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 enum class Tab(val text: String) {
-    DESCRIPTION("Описания"),
+    DESCRIPTION("Описание"),
     RECOMMENDATIONS("Рекомендации"),
     MY_MONTH("Личный месяц"),
     MY_YEAR("Личный год"),
@@ -82,8 +83,10 @@ fun MainScreen(
     val screenHeightDp = LocalConfiguration.current.screenHeightDp
 
     val scope = rememberCoroutineScope()
+    val auth = remember(Firebase::auth)
     val moonCalendarRepository = remember { MoonCalendarRepository() }
     val authRepository = remember { AuthRepository() }
+    val infoRepository = remember(::InfoRepository)
     val noteDao = remember(MainDatabase.getInstance(context)::noteDao)
     val subscriptionStatementRepository = remember(::SubscriptionStatementRepository)
     var moonCalendar by remember { mutableStateOf<List<MoonCalendar>>(emptyList()) }
@@ -94,6 +97,7 @@ fun MainScreen(
     var date by remember { mutableStateOf(Date()) }
     var user by remember { mutableStateOf<User?>(null) }
     var note by remember { mutableStateOf<Note?>(null) }
+    var info by remember { mutableStateOf<Info?>(null) }
 
     val systemUiController = rememberSystemUiController()
     val primaryBackground = primaryBackground()
@@ -103,6 +107,9 @@ fun MainScreen(
     var pedometerTabVisibility by remember { mutableStateOf(false) }
     var myYearTabVisibility by remember { mutableStateOf(false) }
     var myMonthTabVisibility by remember { mutableStateOf(false) }
+    var infoVisibility by remember { mutableStateOf(false) }
+
+    var blur by remember { mutableStateOf(false) }
 
     noteDao.getByDate(date = date.parseToBaseDateFormat()).observe(owner){
         note = it
@@ -122,12 +129,16 @@ fun MainScreen(
         myMonthTabVisibility = user != null && isSubscription && subscriptionStatement != null
                 && (subscriptionStatement?.type != SubscriptionType.LITE_MIN
                 && subscriptionStatement?.type != SubscriptionType.LITE_MAX)
+
+        infoVisibility = user != null && isSubscription && subscriptionStatement != null
+                && (subscriptionStatement?.type != SubscriptionType.LITE_MIN
+                && subscriptionStatement?.type != SubscriptionType.LITE_MAX)
     }
 
     LaunchedEffect(key1 = moonCalendar.lastOrNull(), block = {
         moonCalendar.lastOrNull()?.let {
             systemUiController.setStatusBarColor(
-                Color(0xFF155F4E)//it.moonCalendarColor()
+                Color(0xFF166239)//it.moonCalendarColor()
             )
         }
     })
@@ -150,6 +161,9 @@ fun MainScreen(
     })
 
     LaunchedEffect(key1 = date, block = {
+
+        infoRepository.get(date = date.parseToBaseDateFormat()) { info = null; info = it }
+
         moonCalendarRepository.getMoonCalendar(
             filterDate = date,
             onSuccess = { moonCalendar = it },
@@ -157,6 +171,11 @@ fun MainScreen(
                 Toast.makeText(context, "error: $it", Toast.LENGTH_SHORT).show()
             }
         )
+    })
+
+    LaunchedEffect(user,isSubscription, block = {
+        delay(1000L)
+        blur = !isSubscription
     })
 
     Scaffold {
@@ -198,7 +217,7 @@ fun MainScreen(
                             modifier = Modifier
                                 .height((screenHeightDp / 8).dp)
                                 .width(screenWidthDp.dp),
-                            tint = Color(0xFF155F4E) //moonCalendar.firstOrNull()?.moonCalendarColor()
+                            tint = Color(0xFF166239) //moonCalendar.firstOrNull()?.moonCalendarColor()
                                 //?: LocalContentColor.current.copy(alpha = LocalContentAlpha.current)
                         )
 
@@ -231,7 +250,14 @@ fun MainScreen(
                                 shape = AbsoluteRoundedCornerShape(90.dp),
                                 backgroundColor = tintColor,
                                 onClick = {
-                                    navController.navigate("calendar_screen")
+                                    if(user != null && isSubscription){
+                                        navController.navigate("calendar_screen")
+                                    }else {
+                                        if(auth.currentUser == null)
+                                            navController.navigate("auth_screen")
+                                        else
+                                            navController.navigate("profile_screen")
+                                    }
                                 }
                             ){
                                 Icon(
@@ -322,6 +348,22 @@ fun MainScreen(
                     }
 
                     Spacer(modifier = Modifier.height(5.dp))
+
+                    if(blur && tab == Tab.DESCRIPTION){
+
+                        val text = getDayTextShort(date = date.toLocalDate()).second
+
+                        Box {
+                            Text(
+                                text = text.ifEmpty { getShortRecommendations(date = date.toLocalDate()) },
+                                modifier = Modifier.padding(
+                                    vertical = 2.dp,
+                                    horizontal = 15.dp
+                                ),
+                                color = primaryText()
+                            )
+                        }
+                    }
                 }
 
                 item {
@@ -365,22 +407,98 @@ fun MainScreen(
                             }
                         }
                         Tab.DESCRIPTION -> {
-                            Text(
-                                text = getDayText(date = date.toLocalDate()).second,
-                                modifier = Modifier.padding(
-                                    horizontal = 15.dp
-                                ),
-                                color = primaryText()
-                            )
 
-                            Text(
-                                text = getRecommendations(date = date.toLocalDate()),
-                                modifier = Modifier.padding(
-                                    vertical = 2.dp,
-                                    horizontal = 15.dp
-                                ),
-                                color = primaryText()
-                            )
+                            if(infoVisibility){
+                                info?.let {
+                                    Card(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(10.dp),
+                                        shape = AbsoluteRoundedCornerShape(15.dp),
+                                        backgroundColor = Color(0xFFFFF1E4)
+                                    ) {
+                                        Column {
+                                            Text(
+                                                text = "Aффирмация дня",
+                                                fontWeight = FontWeight.W900,
+                                                modifier = Modifier.padding(horizontal = 15.dp, vertical = 3.dp),
+                                                fontSize = 20.sp,
+                                                color = primaryText()
+                                            )
+
+                                            Text(
+                                                text = it.info,
+                                                color = primaryText(),
+                                                modifier = Modifier.padding(10.dp)
+                                            )
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.height(10.dp))
+                                }
+                            }
+
+                            if(blur){
+                                Box {
+                                    Cloudy(
+                                        modifier = Modifier.clickable {
+                                            if(auth.currentUser == null)
+                                                navController.navigate("auth_screen")
+                                            else
+                                                navController.navigate("profile_screen")
+                                        }.padding(
+                                            vertical = 2.dp,
+                                            horizontal = 15.dp
+                                        ),
+                                        radius = 15,
+                                        key1 = blur,
+                                        key2 = date
+                                    ) {
+                                        Text(
+                                            text = getRecommendations(date = date.toLocalDate()),
+                                            color = primaryText()
+                                        )
+                                    }
+                                }
+                            }
+
+                            if(!blur){
+                                Text(
+                                    text = getDayText(date = date.toLocalDate()).second,
+                                    modifier = Modifier.padding(
+                                        horizontal = 15.dp
+                                    ),
+                                    color = primaryText()
+                                )
+
+                                Text(
+                                    text = getRecommendations(date = date.toLocalDate()),
+                                    modifier = Modifier.padding(
+                                        vertical = 2.dp,
+                                        horizontal = 15.dp
+                                    ),
+                                    color = primaryText()
+                                )
+                            }
+
+                            if(date.toLocalDate().dayOfMonth in listOf(10,20,30)){
+                                Text(
+                                    text = "Даже если в сумме сегодняшняя дата дает благоприятное число, по науке Сюцай это день, когда результаты наших действий могут быть обнулены!\n" +
+                                            "\n" +
+                                            "Следите за эмоциональным и физическим здоровьем, сохраняйте отношения!\n" +
+                                            "\n" +
+                                            "НЕ РЕКОМЕНДУЕТСЯ\n" +
+                                            "\n" +
+                                            "Не стоит подписывать значимые бумаги, крупные покупки, а также принять важные решения\n" +
+                                            "\n" +
+                                            "Не идти на поводу своего ЭГО, быть жесткими и азартными",
+                                    modifier = Modifier.padding(
+                                        vertical = 2.dp,
+                                        horizontal = 15.dp
+                                    ),
+                                    color = primaryText()
+                                )
+                            }
 
                             Text(
                                 text = "Заметка",
@@ -457,7 +575,7 @@ fun TabItem(
             backgroundColor = if(select)
                 tintColor
             else
-                secondaryBackground(),
+                Color(0xFFFFE8D7),
             onClick = onClick
         ){
             Text(

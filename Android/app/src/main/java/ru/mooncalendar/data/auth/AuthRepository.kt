@@ -78,11 +78,24 @@ class AuthRepository {
 
         db.reference.child("users").child(user.uid).get()
             .addOnSuccessListener {
-                onSuccess(it.mapUser())
+                try {
+                    onSuccess(it.mapUser())
+                }catch (e:Exception){
+                    onFailure(e.message ?: "error")
+                }
             }
             .addOnFailureListener {
                 onFailure(it.message ?: "error")
             }
+    }
+
+    fun editDateUser(date: String, onSuccess: () -> Unit,){
+
+        val user = Firebase.auth.currentUser ?: return
+
+        db.reference.child("users").child(user.uid).child("birthday")
+            .setValue(date)
+            .addOnSuccessListener { onSuccess() }
     }
 
     private fun createUser(

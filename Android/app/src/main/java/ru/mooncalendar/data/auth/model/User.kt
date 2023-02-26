@@ -81,7 +81,8 @@ data class User(
 
     @SuppressLint("NewApi")
     fun getMyDay(
-        date: LocalDate
+        date: LocalDate,
+        num: Int? = null
     ): Pair<Int, String> {
 
         val currentYear = date.year
@@ -93,7 +94,7 @@ data class User(
             currentMonth
         )
 
-        var number = myMonth.first + currentDay
+        var number = num ?: (myMonth.first + currentDay)
         var sum = 0
 
         while(number > 0){
@@ -101,7 +102,11 @@ data class User(
             number /=10
         }
 
-        return sum to ""
+        return if(sum in (1..9).toList()){
+            sum to ""
+        }else {
+            getMyDay(date, sum)
+        }
     }
 
     fun getMyMonth(currentYear: Int, currentMonth: Int): Pair<Int, String> {

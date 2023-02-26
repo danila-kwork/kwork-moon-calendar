@@ -1,6 +1,7 @@
 package ru.mooncalendar.screens
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
@@ -10,12 +11,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import ru.mooncalendar.R
+import ru.mooncalendar.common.openBrowser
 import ru.mooncalendar.data.auth.AuthRepository
 import ru.mooncalendar.ui.theme.primaryBackground
 import ru.mooncalendar.ui.theme.primaryText
@@ -112,6 +116,7 @@ fun SignOn(
 
     val screenHeightDp = LocalConfiguration.current.screenHeightDp
     val screenWidthDp = LocalConfiguration.current.screenWidthDp
+    val context = LocalContext.current
 
     val systemUiController = rememberSystemUiController()
     val primaryBackground = primaryBackground()
@@ -120,6 +125,7 @@ fun SignOn(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var birthday by remember { mutableStateOf("") }
+    var privacyPolicy by remember { mutableStateOf(false) }
 
     LaunchedEffect(key1 = Unit, block = {
         systemUiController.setStatusBarColor(
@@ -150,14 +156,15 @@ fun SignOn(
                     text = errorMessage,
                     fontWeight = FontWeight.W900,
                     color = Color.Red,
-                    modifier = Modifier.padding(5.dp),
+                    modifier = Modifier.padding(5.dp).fillMaxWidth(),
+                    textAlign = TextAlign.Center
                 )
 
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
                     modifier = Modifier.padding(5.dp),
-                    label = { Text(text = "Электроная почта", color = primaryText()) },
+                    label = { Text(text = "Электронная почта", color = primaryText()) },
                     shape = AbsoluteRoundedCornerShape(10.dp),
                     colors = TextFieldDefaults.outlinedTextFieldColors(
                         backgroundColor = primaryBackground(),
@@ -166,7 +173,7 @@ fun SignOn(
                 )
 
                 Text(
-                    text = "В формате 19-05-2005",
+                    text = "В формате ДД-ММ-ГГ",
                     modifier = Modifier.padding(end = 5.dp),
                     color = primaryText(),
                     fontWeight = FontWeight.W900
@@ -203,6 +210,29 @@ fun SignOn(
 
                 Spacer(modifier = Modifier.height(20.dp))
 
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(5.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Checkbox(
+                        modifier = Modifier.padding(5.dp),
+                        checked = privacyPolicy,
+                        onCheckedChange = { privacyPolicy = it }
+                    )
+
+                    TextButton(onClick = { context.openBrowser("https://firebasestorage.googleapis.com/v0/b/moon--calendar.appspot.com/o/privacyPolicy%2FprivacyPolicy.html?alt=media&token=2787a8fc-2ebe-4efc-b078-1528661f4b49") }) {
+                        Text(
+                            text = "Политика конфиденциальности",
+                            color = primaryText(),
+                            modifier = Modifier.padding(5.dp),
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+
                 Button(
                     modifier = Modifier
                         .padding(
@@ -212,15 +242,19 @@ fun SignOn(
                         .fillMaxWidth(),
                     onClick = {
                         try {
-                            errorMessage = ""
+                            if(privacyPolicy){
+                                errorMessage = ""
 
-                            authRepository.reg(
-                                email = email.trim(),
-                                password = password.trim(),
-                                birthday = birthday.trim(),
-                                onSuccess = { navController.navigate("main_screen") },
-                                onFailure = { errorMessage = it  }
-                            )
+                                authRepository.reg(
+                                    email = email.trim(),
+                                    password = password.trim(),
+                                    birthday = birthday.trim(),
+                                    onSuccess = { navController.navigate("main_screen") },
+                                    onFailure = { errorMessage = it  }
+                                )
+                            }else {
+                                errorMessage = "Согласитесь с политикой конфиденциальности"
+                            }
                         }catch (e:Exception){
                             errorMessage = e.message.toString()
                         }
@@ -236,6 +270,10 @@ fun SignOn(
                         modifier = Modifier.padding(5.dp)
                     )
                 }
+            }
+
+            item {
+                Spacer(modifier = Modifier.height(50.dp))
             }
         }
     }
@@ -286,14 +324,15 @@ fun SignIn(
                     text = errorMessage,
                     fontWeight = FontWeight.W900,
                     color = Color.Red,
-                    modifier = Modifier.padding(5.dp),
+                    modifier = Modifier.padding(5.dp).fillMaxWidth(),
+                    textAlign = TextAlign.Center
                 )
 
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
                     modifier = Modifier.padding(5.dp),
-                    label = { Text(text = "Электроная почта", color = primaryText()) },
+                    label = { Text(text = "Электронная почта", color = primaryText()) },
                     shape = AbsoluteRoundedCornerShape(10.dp),
                     colors = TextFieldDefaults.outlinedTextFieldColors(
                         backgroundColor = primaryBackground(),

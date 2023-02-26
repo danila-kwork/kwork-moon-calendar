@@ -1,6 +1,7 @@
 package ru.mooncalendar
 
 import android.annotation.SuppressLint
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -19,6 +20,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
@@ -35,6 +38,7 @@ class MainActivity : ComponentActivity() {
 
     private lateinit var viewModel: MainActivityViewModel
 
+    @OptIn(ExperimentalPermissionsApi::class)
     @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,6 +56,16 @@ class MainActivity : ComponentActivity() {
 
                 val systemUiController = rememberSystemUiController()
                 val secondaryBackground = secondaryBackground()
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    val push =
+                        rememberPermissionState(permission = android.Manifest.permission.POST_NOTIFICATIONS)
+
+                    LaunchedEffect(key1 = Unit, block = {
+                        push.launchPermissionRequest()
+                    })
+                }
+
 
                 LaunchedEffect(key1 = Unit, block = {
                     systemUiController.setNavigationBarColor(
@@ -132,6 +146,10 @@ class MainActivity : ComponentActivity() {
                                 SignOn(navController = navController)
                             }
 
+                            composable("training_manual"){
+                                TrainingManualScreen()
+                            }
+
                             composable(
                                 route = "main_screen?dateString={dateString}",
                                 arguments = listOf(
@@ -161,7 +179,11 @@ class MainActivity : ComponentActivity() {
                             }
 
                             composable("settings_screen"){
-                                SettingsScreen()
+                                SettingsScreen(navController = navController)
+                            }
+
+                            composable("create_info_screen"){
+                                CreateInfoScreen(navController = navController)
                             }
                         }
                     )

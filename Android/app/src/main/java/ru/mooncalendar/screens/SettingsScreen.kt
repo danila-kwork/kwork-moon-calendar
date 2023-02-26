@@ -7,15 +7,22 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
@@ -23,6 +30,7 @@ import ru.mooncalendar.R
 import ru.mooncalendar.common.openBrowser
 import ru.mooncalendar.data.auth.AuthRepository
 import ru.mooncalendar.data.auth.model.User
+import ru.mooncalendar.data.auth.model.UserRole
 import ru.mooncalendar.ui.theme.primaryBackground
 import ru.mooncalendar.ui.theme.primaryText
 import ru.mooncalendar.ui.theme.secondaryBackground
@@ -31,11 +39,12 @@ import ru.mooncalendar.ui.theme.secondaryBackground
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter", "IntentReset")
 @Composable
 fun SettingsScreen(
-
+    navController: NavController
 ) {
     val context = LocalContext.current
     val authRepository = remember(::AuthRepository)
     var user by remember { mutableStateOf<User?>(null) }
+    var alertEditDate by remember { mutableStateOf(false) }
     val auth = remember(Firebase::auth)
 
     val systemUiController = rememberSystemUiController()
@@ -73,22 +82,83 @@ fun SettingsScreen(
                 backgroundColor = primaryBackground(),
                 title = {
                     Text(
-                        text = user?.email ?: "Настройки",
+                        text = user?.email ?: "Профиль пользователя",
                         color = primaryText()
                     )
                 }
             )
         }
     ) {
+
+        if(alertEditDate && user != null){
+            AlertEditDate(
+                onDismissRequest = { alertEditDate = false },
+                currentDate = user!!.birthday,
+                editDate = {
+                    authRepository.editDateUser(it) {
+                        alertEditDate = false
+                        authRepository.getUser({ user = it })
+                    }
+                }
+            )
+        }
+
         LazyColumn {
             item {
 
                 Spacer(modifier = Modifier.height(50.dp))
 
+                if(user?.userRole == UserRole.ADMIN){
+                    Divider(color = primaryText())
+
+                    Row(
+                        modifier = Modifier
+                            .background(secondaryBackground())
+                            .fillMaxWidth()
+                            .clickable {
+                                navController.navigate("create_info_screen")
+                            },
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "Добавить аффирмацию",
+                            fontWeight = FontWeight.W900,
+                            modifier = Modifier.padding(5.dp)
+                        )
+
+                        Text(
+                            text = "->",
+                            fontWeight = FontWeight.W100,
+                            modifier = Modifier.padding(5.dp)
+                        )
+                    }
+                }
+
                 Column(
-                    modifier = Modifier.background(secondaryBackground())
+                    modifier = Modifier
+                        .background(secondaryBackground())
+                        .clickable {
+                            if (user?.userRole == UserRole.ADMIN) {
+                                alertEditDate = true
+                            }
+                        }
                 ) {
                     user?.let {
+
+                        Divider(color = primaryText())
+
+                        Text(
+                            text = "Электронная почта",
+                            fontWeight = FontWeight.W900,
+                            modifier = Modifier.padding(5.dp)
+                        )
+
+                        Text(
+                            text = user?.email ?: "",
+                            fontWeight = FontWeight.W100,
+                            modifier = Modifier.padding(5.dp)
+                        )
+
                         Divider(color = primaryText())
 
                         Text(
@@ -98,7 +168,7 @@ fun SettingsScreen(
                         )
 
                         Text(
-                            text = user?.birthday ?: "",
+                            text = "${user?.birthday}\nЛичный год${user?.getMyYear()}",
                             fontWeight = FontWeight.W100,
                             modifier = Modifier.padding(5.dp)
                         )
@@ -108,6 +178,29 @@ fun SettingsScreen(
                 }
 
                 Spacer(modifier = Modifier.height(30.dp))
+
+                Column(
+                    modifier = Modifier
+                        .background(secondaryBackground())
+                        .clickable {
+
+                        }
+                ) {
+                    Divider(color = primaryText())
+
+                    TextButton(onClick = {
+                        navController.navigate("training_manual")
+                    }) {
+                        Text(
+                            text = "Методичка по использованию календаря «Жанат»",
+//                            fontWeight = FontWeight.W900,
+                            modifier = Modifier
+                                .padding(5.dp)
+                                .fillMaxWidth(),
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
 
                 Column(
                     modifier = Modifier
@@ -153,28 +246,28 @@ fun SettingsScreen(
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                Column(
-                    modifier = Modifier
-                        .background(secondaryBackground())
-                        .clickable {
-
-                        }
-                ) {
-                    Divider(color = primaryText())
-
-                    TextButton(onClick = { /*TODO*/ }) {
-                        Text(
-                            text = "Воостановить подписку",
-//                            fontWeight = FontWeight.W900,
-                            modifier = Modifier
-                                .padding(5.dp)
-                                .fillMaxWidth(),
-                            textAlign = TextAlign.Center
-                        )
-                    }
-
-                    Divider(color = primaryText())
-                }
+//                Column(
+//                    modifier = Modifier
+//                        .background(secondaryBackground())
+//                        .clickable {
+//
+//                        }
+//                ) {
+//                    Divider(color = primaryText())
+//
+//                    TextButton(onClick = { /*TODO*/ }) {
+//                        Text(
+//                            text = "Восстановить подписку",
+////                            fontWeight = FontWeight.W900,
+//                            modifier = Modifier
+//                                .padding(5.dp)
+//                                .fillMaxWidth(),
+//                            textAlign = TextAlign.Center
+//                        )
+//                    }
+//
+//                    Divider(color = primaryText())
+//                }
 
                 Spacer(modifier = Modifier.height(20.dp))
 
@@ -199,7 +292,7 @@ fun SettingsScreen(
                         context.openBrowser("syucai.app")
                     }) {
                         Text(
-                            text = "made with Сюцай ♥️\nsyucai.app",
+                            text = "By Lunara Kanash ♥️\nsyucai.app",
                             fontWeight = FontWeight.W400,
                             modifier = Modifier.padding(5.dp),
                             textAlign = TextAlign.Center,
@@ -210,4 +303,50 @@ fun SettingsScreen(
             }
         }
     }
+}
+
+@Composable
+private fun AlertEditDate(
+    currentDate: String,
+    onDismissRequest: () -> Unit,
+    editDate: (String) -> Unit
+) {
+    var date by remember { mutableStateOf("") }
+    val textFieldFocusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(key1 = Unit, block = {
+        textFieldFocusRequester.requestFocus()
+        date = currentDate
+    })
+
+    AlertDialog(
+        onDismissRequest = onDismissRequest,
+        backgroundColor = primaryBackground(),
+        shape = AbsoluteRoundedCornerShape(15.dp),
+        buttons = {
+            OutlinedTextField(
+                modifier = Modifier
+                    .padding(5.dp)
+                    .focusRequester(textFieldFocusRequester),
+                value = date,
+                onValueChange = { date = it },
+                colors = TextFieldDefaults.textFieldColors(
+                    backgroundColor = primaryBackground(),
+                    textColor = primaryText()
+                ),
+                keyboardOptions = KeyboardOptions(
+                    imeAction = ImeAction.Send
+                ),
+                keyboardActions = KeyboardActions(onSend = {
+                    editDate(date)
+                }),
+                label = {
+                    Text(
+                        text = "В формате ДД-ММ-ГГ",
+                        color = primaryText()
+                    )
+                }
+            )
+        }
+    )
 }

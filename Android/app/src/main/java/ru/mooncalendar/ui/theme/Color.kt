@@ -4,7 +4,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
-val tintColor = Color(0xFF32CE7A)
+val tintColor = Color(0xFFFFCC00)
 
 val Purple200 = tintColor
 val Purple500 = tintColor
@@ -39,6 +39,6 @@ fun primaryText(): Color {
     return if(darkMode){
         Color.White
     }else {
-        Color.Black
+        Color(0xFF26333C)
     }
 }
