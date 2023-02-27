@@ -185,6 +185,10 @@ class MainActivity : ComponentActivity() {
                             composable("create_info_screen"){
                                 CreateInfoScreen(navController = navController)
                             }
+
+                            composable("subscription_info_screen"){
+                                SubscriptionInfoScreen()
+                            }
                         }
                     )
                 }

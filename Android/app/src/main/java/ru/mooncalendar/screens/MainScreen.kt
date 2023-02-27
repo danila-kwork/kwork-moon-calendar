@@ -59,14 +59,14 @@ import ru.mooncalendar.ui.theme.primaryBackground
 import ru.mooncalendar.ui.theme.primaryText
 import ru.mooncalendar.ui.theme.secondaryBackground
 import ru.mooncalendar.ui.theme.tintColor
+import ru.mooncalendar.ui.view.ExpandableCardView
 import java.text.SimpleDateFormat
 import java.util.*
 
 enum class Tab(val text: String) {
     DESCRIPTION("Описание"),
     RECOMMENDATIONS("Рекомендации"),
-    MY_MONTH("Личный месяц"),
-    MY_YEAR("Личный год"),
+    MY_DESCRIPTION("Личные периоды"),
     PEDOMETER("Шагомер")
 }
 
@@ -337,9 +337,8 @@ fun MainScreen(
                                         when(it) {
                                             Tab.DESCRIPTION -> true
                                             Tab.RECOMMENDATIONS -> recommendationsTabVisibility
-                                            Tab.MY_YEAR -> myYearTabVisibility
                                             Tab.PEDOMETER -> pedometerTabVisibility
-                                            Tab.MY_MONTH -> myMonthTabVisibility
+                                            Tab.MY_DESCRIPTION -> myMonthTabVisibility
                                         }
                                     }
                                 )
@@ -391,21 +390,6 @@ fun MainScreen(
                                 Divider(color = secondaryBackground())
                             }
                         }
-                        Tab.MY_YEAR -> {
-                            if(user != null){
-
-                                Text(
-                                    text = user!!.getMyYear(date.toLocalDate().year).second,
-                                    modifier = Modifier.padding(
-                                        vertical = 5.dp,
-                                        horizontal = 15.dp
-                                    ),
-                                    color = primaryText()
-                                )
-
-                                Spacer(modifier = Modifier.height(5.dp))
-                            }
-                        }
                         Tab.DESCRIPTION -> {
 
                             if(infoVisibility){
@@ -441,15 +425,17 @@ fun MainScreen(
                             if(blur){
                                 Box {
                                     Cloudy(
-                                        modifier = Modifier.clickable {
-                                            if(auth.currentUser == null)
-                                                navController.navigate("auth_screen")
-                                            else
-                                                navController.navigate("profile_screen")
-                                        }.padding(
-                                            vertical = 2.dp,
-                                            horizontal = 15.dp
-                                        ),
+                                        modifier = Modifier
+                                            .clickable {
+                                                if (auth.currentUser == null)
+                                                    navController.navigate("auth_screen")
+                                                else
+                                                    navController.navigate("profile_screen")
+                                            }
+                                            .padding(
+                                                vertical = 2.dp,
+                                                horizontal = 15.dp
+                                            ),
                                         radius = 15,
                                         key1 = blur,
                                         key2 = date
@@ -528,22 +514,35 @@ fun MainScreen(
                         Tab.PEDOMETER -> PedometerScreen(
                             date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(date)
                         )
-                        Tab.MY_MONTH -> {
+                        Tab.MY_DESCRIPTION -> {
                             if(user != null){
+                                val localDate = remember(date::toLocalDate)
 
-                                val localDate = date.toLocalDate()
+                                Divider(color = secondaryBackground())
 
-                                Text(
-                                    text = user!!.getMyMonth(
+                                ExpandableCardView(
+                                    title = "Личный год",
+                                    body = user!!.getMyYear(date.toLocalDate().year).second
+                                )
+
+                                Divider(color = secondaryBackground())
+
+                                ExpandableCardView(
+                                    title = "Личный месяц",
+                                    body = user!!.getMyMonth(
                                         localDate.year,
                                         localDate.month.value
-                                    ).second,
-                                    modifier = Modifier.padding(
-                                        vertical = 5.dp,
-                                        horizontal = 15.dp
-                                    ),
-                                    color = primaryText()
+                                    ).second
                                 )
+
+                                Divider(color = secondaryBackground())
+                                ExpandableCardView(
+                                    title = "Личный день",
+                                    body = user!!.getMyDay(
+                                        localDate
+                                    ).second
+                                )
+                                Divider(color = secondaryBackground())
 
                                 Spacer(modifier = Modifier.height(5.dp))
                             }

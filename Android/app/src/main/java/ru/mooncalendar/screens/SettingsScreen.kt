@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -26,6 +27,8 @@ import androidx.navigation.NavController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
+import io.github.boguszpawlowski.composecalendar.kotlinxDateTime.now
+import kotlinx.datetime.LocalDate
 import ru.mooncalendar.R
 import ru.mooncalendar.common.openBrowser
 import ru.mooncalendar.data.auth.AuthRepository
@@ -46,6 +49,7 @@ fun SettingsScreen(
     var user by remember { mutableStateOf<User?>(null) }
     var alertEditDate by remember { mutableStateOf(false) }
     val auth = remember(Firebase::auth)
+    val currentDate by remember { mutableStateOf(LocalDate.now()) }
 
     val systemUiController = rememberSystemUiController()
     val primaryBackground = primaryBackground()
@@ -168,7 +172,7 @@ fun SettingsScreen(
                         )
 
                         Text(
-                            text = "${user?.birthday}\nЛичный год${user?.getMyYear()}",
+                            text = "${user?.birthday}\nЛичный год${user?.getMyYear(currentDate.year)}",
                             fontWeight = FontWeight.W100,
                             modifier = Modifier.padding(5.dp)
                         )
@@ -192,7 +196,30 @@ fun SettingsScreen(
                         navController.navigate("training_manual")
                     }) {
                         Text(
-                            text = "Методичка по использованию календаря «Жанат»",
+                            text = "О приложении «Жанат»",
+//                            fontWeight = FontWeight.W900,
+                            modifier = Modifier
+                                .padding(5.dp)
+                                .fillMaxWidth(),
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+
+                Column(
+                    modifier = Modifier
+                        .background(secondaryBackground())
+                        .clickable {
+
+                        }
+                ) {
+                    Divider(color = primaryText())
+
+                    TextButton(onClick = {
+                        navController.navigate("subscription_info_screen")
+                    }) {
+                        Text(
+                            text = "Методичка и информация о подписке",
 //                            fontWeight = FontWeight.W900,
                             modifier = Modifier
                                 .padding(5.dp)
@@ -243,6 +270,29 @@ fun SettingsScreen(
 
                     Divider(color = primaryText())
                 }
+
+                Column(
+                    modifier = Modifier.background(secondaryBackground())
+                ) {
+                    Divider(color = primaryText())
+
+                    TextButton(onClick = {
+                        auth.signOut()
+                        navController.navigate("auth_screen")
+                    }) {
+                        Text(
+                            text = "Выйти",
+                            modifier = Modifier
+                                .padding(5.dp)
+                                .fillMaxWidth(),
+                            textAlign = TextAlign.Center,
+                            color = Color.Red
+                        )
+                    }
+
+                    Divider(color = primaryText())
+                }
+
 
                 Spacer(modifier = Modifier.height(20.dp))
 
