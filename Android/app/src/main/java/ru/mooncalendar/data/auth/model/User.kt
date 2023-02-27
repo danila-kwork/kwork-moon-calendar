@@ -185,6 +185,7 @@ data class User(
                     }
                     append("\n\n")
                     append("● В «плюсе» - ЭГО ищет счастье, тогда необходимо открыть свое дело, создание чего-то нового, начало новой жизни.")
+                    append("\n")
                     append("● В «минусе» - ЭГО страдает: жжение сердечной чакры, внутри возможно ощущение духоты. Человек не будет знать куда себя деть")
                 }
             }
@@ -197,8 +198,11 @@ data class User(
                     }
                     append("\n\n")
                     append("● Можно налаживать отношения.")
+                    append("\n")
                     append("● Когда человек в «плюсе» - включается дипломатии. Приходит желание создании новых отношения или укрепить старые.")
+                    append("\n")
                     append("● В «минусе» нельзя принимать серьезные решения в отношениях. Так как может произойти их разрыв.")
+                    append("\n")
                     append("● Возможны депрессии и неуверенность.")
                 }
             }
@@ -211,6 +215,7 @@ data class User(
                     }
                     append("\n\n")
                     append("● В «плюсе» станет месяцем анализа и успеха.")
+                    append("\n")
                     append("● В «минусе» включится азарт и разрушения.")
                 }
             }
@@ -223,8 +228,11 @@ data class User(
                     }
                     append("\n\n")
                     append("● Месяц мистики.")
+                    append("\n")
                     append("● Возможны неизвестные мистические события.")
+                    append("\n")
                     append("● В «плюсе» — это положительные события и мистика")
+                    append("\n")
                     append("● В «минусе» - это отрицательные события, отрицательная Мистика")
                 }
             }
@@ -237,7 +245,9 @@ data class User(
                     }
                     append("\n\n")
                     append("● Месяц коммуникаций, когда все тайное становится явным. Скелеты выпадают из шкафа. Человек будет говорить о. вещах, что «правильно и неправильно».")
+                    append("\n")
                     append("● В «минусе» разрушается логика.")
+                    append("\n")
                     append("● В «плюсе», как только скажет «правильно», пойдет трансформация.")
                 }
             }
@@ -250,6 +260,7 @@ data class User(
                     }
                     append("\n\n")
                     append("● В «плюсе»: развитие, успех и могут сбываться мечты.")
+                    append("\n")
                     append("● В «минусе»: обострение хронических заболеваний. Стоит завершить все незаконченные дела.")
                 }
             }
@@ -262,7 +273,9 @@ data class User(
                     }
                     append("\n\n")
                     append("● Месяц трансформации и кризиса. Нужна дисциплина.")
+                    append("\n")
                     append("● В «плюсе»: трансформация сознания, где необходимо полностью изменить свое сознание.")
+                    append("\n")
                     append("● В «минусе»: кризис. Кризис воспринимать как избавление от чего-то ненужного. Важно трансформироваться, уйти от страданий.")
                 }
             }
@@ -286,11 +299,82 @@ data class User(
                     }
                     append("\n\n")
                     append("● Нужно принимать все, что происходит.")
+                    append("\n")
                     append("● В «плюсе»: когда понимаешь, что смерть неизбежна и что может быть разрушение. Принимать ситуацию.")
+                    append("\n")
                     append("● В «минусе»: это все равно произойдет. В этом месяце нужно проявлять волю к победе. Сабр.")
                 }
             }
             else -> buildAnnotatedString {}
+        }
+    }
+
+    @SuppressLint("NewApi")
+    fun getMyYearShortText(currentYear: Int): AnnotatedString {
+        val simpleDateFormat = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
+        val date = simpleDateFormat.parse(this.birthday).toLocalDate()
+
+        var year = currentYear
+        var yearSum = 0
+
+        while(year > 0){
+            yearSum += year % 10
+            year /=10
+        }
+
+        var month = date.month.value
+        var monthSum = 0
+
+        while(month > 0){
+            monthSum += month % 10
+            month /=10
+        }
+
+        var day = date.dayOfMonth
+        var daySum = 0
+
+        while(day > 0){
+            daySum += day % 10
+            day /=10
+        }
+
+        var sum = yearSum + monthSum + daySum
+        var number = 0
+
+        while(sum > 0){
+            number += sum % 10
+            sum /=10
+        }
+
+        return when(number) {
+            1 -> buildAnnotatedString {
+                append("ГОД 1 : СОЛНЦЕ")
+            }
+            2 -> buildAnnotatedString {
+                append("ГОД 2: ЛУНЫ")
+            }
+            3 -> buildAnnotatedString {
+                append("ГОД 3: ЮПИТЕР")
+            }
+            4 -> buildAnnotatedString {
+                append("ГОД 4: РАХУ")
+            }
+            5 -> buildAnnotatedString {
+                append("ГОД 5: МЕРКУРИЙ")
+            }
+            6 -> buildAnnotatedString {
+                append("ГОД 6: ВЕНЕРА")
+            }
+            7 -> buildAnnotatedString {
+                append("ГОД 7: КЕТУ")
+            }
+            8 -> buildAnnotatedString {
+                append("ГОД 8: САТУРН")
+            }
+            9 -> buildAnnotatedString {
+                append("ГОД 9 – МАРС")
+            }
+            else -> buildAnnotatedString {  }
         }
     }
 
@@ -335,14 +419,7 @@ data class User(
             1 -> buildAnnotatedString {
                 withStyle(style = ParagraphStyle(textAlign = TextAlign.Center)){
                     withStyle(style = SpanStyle(fontWeight = FontWeight.W900)){
-                        append("ГОД 1 : СОЛНЦЕ")
-                    }
-                }
-
-                append("\n")
-
-                withStyle(style = ParagraphStyle(textAlign = TextAlign.Center)){
-                    withStyle(style = SpanStyle(fontWeight = FontWeight.W900)){
+                        append("ГОД 1 : СОЛНЦЕ\n")
                         append("ГОД НАЧАЛА ВСЕГО НОВОГО")
                     }
                 }
@@ -367,28 +444,30 @@ data class User(
                 append(" В негативе у человека происходит сжигание сердечной чакры (возможно ощущение жжения в груди). Человек испытывает депрессию. Не знает куда себя деть свою энергию.")
                 append(" Человеку следует смотреть на мир по-новому")
 
+                append("\n")
+                append("\n")
+
                 withStyle(style = ParagraphStyle(textAlign = TextAlign.Center)){
                     withStyle(style = SpanStyle(fontWeight = FontWeight.W900)){
                         append("Что нужно делать:")
                     }
                 }
 
+                append("\n")
+
                 append(" ● Открыть новое дело")
+                append("\n")
                 append(" ● Принимать решения")
+                append("\n")
                 append(" ● Нарабатывать лидерские качества")
+                append("\n")
                 append(" ● Развивать стратегическое мышление.")
             }
             2 -> buildAnnotatedString {
                 withStyle(style = ParagraphStyle(textAlign = TextAlign.Center)){
                     withStyle(style = SpanStyle(fontWeight = FontWeight.W900)){
                         append("ГОД 2: ЛУНЫ")
-                    }
-                }
-
-                append("\n")
-
-                withStyle(style = ParagraphStyle(textAlign = TextAlign.Center)){
-                    withStyle(style = SpanStyle(fontWeight = FontWeight.W900)){
+                        append("\n")
                         append("ГОД ДИПЛОМАТИИ.")
                     }
                 }
@@ -410,35 +489,34 @@ data class User(
                 }
                 append(" Сомнение. Двойственность. Депрессивность. Будут разрывы отношений и депрессии (страдания).")
 
+                append("\n")
+                append("\n")
+
                 withStyle(style = ParagraphStyle(textAlign = TextAlign.Center)){
                     withStyle(style = SpanStyle(fontWeight = FontWeight.W900)){
                         append("Что нужно делать:")
                     }
                 }
 
+                append("\n")
                 append(" ● Учиться понимать людей̆. Прийти к пониманию данности человека")
+                append("\n")
                 append(" ● Задавать вопросы: “А правильно ли я вас понял? А вам именно это нужно?”")
+                append("\n")
                 append(" ● Поход в театр 2 раза в месяц с особым вниманием к эмоциям актёров и проживанием (включением) актёров и их результатам.")
+                append("\n")
                 append(" ● Посмотреть историю происхождения эмоций и какие результаты этих эмоций.")
+                append("\n")
                 append(" ● Посетить 5 различных религиозных конфессий (Христианство, Буддизм, Ислам, Иудаизм и др.).")
             }
             3 -> buildAnnotatedString {
                 withStyle(style = ParagraphStyle(textAlign = TextAlign.Center)){
                     withStyle(style = SpanStyle(fontWeight = FontWeight.W900)){
                         append("ГОД 3: ЮПИТЕР")
-                    }
-                }
-
-                append("\n")
-
-                withStyle(style = ParagraphStyle(textAlign = TextAlign.Center)){
-                    withStyle(style = SpanStyle(fontWeight = FontWeight.W900)){
+                        append("\n")
                         append("ГОД АНАЛИЗА И УСПЕХА")
                     }
                 }
-
-                append("\n")
-                append(" ")
 
                 append("\n")
                 append("\n")
@@ -460,27 +538,23 @@ data class User(
                     }
                 }
 
+                append("\n")
                 append(" ● Вести ежедневник.")
+                append("\n")
                 append(" ● Анализировать ситуации из жизни.")
+                append("\n")
                 append(" ● Планировать свой день и вечером проводить его анализ.")
+                append("\n")
                 append(" ● Контролировать деньги.")
             }
             4 -> buildAnnotatedString {
                 withStyle(style = ParagraphStyle(textAlign = TextAlign.Center)){
                     withStyle(style = SpanStyle(fontWeight = FontWeight.W900)){
                         append("ГОД 4: РАХУ")
-                    }
-                }
-
-                append("\n")
-
-                withStyle(style = ParagraphStyle(textAlign = TextAlign.Center)){
-                    withStyle(style = SpanStyle(fontWeight = FontWeight.W900)){
+                        append("\n")
                         append("ГОД МИСТИКИ")
                     }
                 }
-
-                append("\n")
 
                 append("\n")
                 append("\n")
@@ -502,27 +576,24 @@ data class User(
                     }
                 }
 
+                append("\n")
                 append(" ● Получать знания и определять цели.")
+                append("\n")
                 append(" ● Тратить деньги на курсы и обучения, получать сертификаты.")
+                append("\n")
                 append(" ● Выписать 100-400 своих целей.")
+                append("\n")
                 append(" ● Освоить инструменты целеполагания.")
             }
             5 -> buildAnnotatedString {
                 withStyle(style = ParagraphStyle(textAlign = TextAlign.Center)){
                     withStyle(style = SpanStyle(fontWeight = FontWeight.W900)){
                         append("ГОД 5: МЕРКУРИЙ")
-                    }
-                }
-
-                append("\n")
-
-                withStyle(style = ParagraphStyle(textAlign = TextAlign.Center)){
-                    withStyle(style = SpanStyle(fontWeight = FontWeight.W900)){
+                        append("\n")
                         append("ГОД КОММУНИКАЦИИ")
                     }
                 }
 
-                append("\n")
                 append(" Год, когда всё тайное становится явным (скелеты выпадают из шкафа).")
 
                 append("\n")
@@ -545,26 +616,28 @@ data class User(
                     }
                 }
 
+                append("\n")
                 append(" ● Прочитать книгу Д. Троцкого “Пока-я-не-Я”.")
+                append("\n")
                 append(" ● Ежедневно коммуницировать с 1-5 человеком выше себя по уровню успешности, компетенции и доходах в поставленной цели.")
+                append("\n")
                 append(" ● Разработать 30-секундную презентацию себя, чтобы к вам выстроилась очередь.")
+                append("\n")
                 append(" ● Проводить мастер-классы, передавать знания на публику.")
+                append("\n")
                 append(" ● Выписать 5 человек, которые обидели вас или обидели вы.")
+                append("\n")
                 append(" ● Позвонить и попросить прощения у них, поблагодарить их за то, что он преподал урок и был учителем для нас.")
+                append("\n")
                 append(" ● Простить долги и обязательно позвонить этим людям и сказать им, что вы простили им их долги и что вы всегда рады им в гостях на чай.")
+                append("\n")
                 append(" ● Масштабироваться (например проводите обучение: надо значит провести в другом месте обучение, или если готовите торты - значит начните печь еще печенье, открыли свою кофейню - значит настало время открыть еще одну и т.д")
             }
             6 -> buildAnnotatedString {
                 withStyle(style = ParagraphStyle(textAlign = TextAlign.Center)){
                     withStyle(style = SpanStyle(fontWeight = FontWeight.W900)){
                         append("ГОД 6: ВЕНЕРА")
-                    }
-                }
-
-                append("\n")
-
-                withStyle(style = ParagraphStyle(textAlign = TextAlign.Center)){
-                    withStyle(style = SpanStyle(fontWeight = FontWeight.W900)){
+                        append("\n")
                         append("ГОД ЛЮБВИ И УСПЕХА.")
                     }
                 }
@@ -592,31 +665,31 @@ data class User(
                     }
                 }
 
+                append("\n")
                 append(" ● Прочитать книгу Г. Чепмена “Пять языков любви”.")
+                append("\n")
                 append(" ● Благодарить Творца с утра и перед сном с конкретным перечислением за что.")
+                append("\n")
                 append(" ● Принимать кислую пищу на завтрак (Начинает вырабатываться окситоцин).")
+                append("\n")
                 append(" ● Пить тёплую воду (1 л на 30 кг).")
+                append("\n")
                 append(" ● Вода, баня, сауна, бассейн, верховая езда.")
+                append("\n")
                 append(" ● Созерцать природу, смотреть на прекрасное, вдохновение.")
+                append("\n")
                 append(" ● Медитация на любовь.")
+                append("\n")
                 append(" ● Дневник Успеха (каждый̆ день по пяти пунктов, за что можешь себя похвалить).")
             }
             7 -> buildAnnotatedString {
                 withStyle(style = ParagraphStyle(textAlign = TextAlign.Center)){
                     withStyle(style = SpanStyle(fontWeight = FontWeight.W900)){
                         append("ГОД 7: КЕТУ.")
-                    }
-                }
-
-                append("\n")
-
-                withStyle(style = ParagraphStyle(textAlign = TextAlign.Center)){
-                    withStyle(style = SpanStyle(fontWeight = FontWeight.W900)){
+                        append("\n")
                         append("ГОД КРИЗИСА И ТРАНСФОРМАЦИИ.")
                     }
                 }
-
-                append("\n")
                 append(" Задача - уйти от страданий и прийти в трансформацию.")
 
                 append("\n")
@@ -645,28 +718,32 @@ data class User(
                     }
                 }
 
+                append("\n")
                 append(" ● Поднимать уровень Кундалини.")
+                append("\n")
                 append(" ● Ходьба минимум 6 км в день со скоростью от 5 км/час.")
+                append("\n")
                 append(" ● Делать 10-минутный кардиокомплекс.")
+                append("\n")
                 append(" ● Плавание.")
+                append("\n")
                 append(" ● Лыжи.")
+                append("\n")
                 append(" ● Секс 45 минут.")
+                append("\n")
                 append(" ● Ходить в баню.")
+                append("\n")
                 append(" ● Потеть.")
+                append("\n")
                 append(" ● Медитаций.")
+                append("\n")
                 append(" ● Ещё больше поднимания энергии для тех, кто родился 10, 20, 30 числа.")
             }
             8 -> buildAnnotatedString {
                 withStyle(style = ParagraphStyle(textAlign = TextAlign.Center)){
                     withStyle(style = SpanStyle(fontWeight = FontWeight.W900)){
                         append("ГОД 8: САТУРН")
-                    }
-                }
-
-                append("\n")
-
-                withStyle(style = ParagraphStyle(textAlign = TextAlign.Center)){
-                    withStyle(style = SpanStyle(fontWeight = FontWeight.W900)){
+                        append("\n")
                         append("ГОД РЕАЛИЗАЦИИ КАРМЫ ЧЕЛОВЕКА")
                     }
                 }
@@ -698,52 +775,54 @@ data class User(
                     }
                 }
 
+                append("\n")
                 append(" ● Трудиться 20 часов в день.")
+                append("\n")
                 append(" ● Нарабатывать навыки.")
+                append("\n")
                 append(" ● Стать профессионалом.")
             }
             9 -> buildAnnotatedString {
                 withStyle(style = ParagraphStyle(textAlign = TextAlign.Center)){
                     withStyle(style = SpanStyle(fontWeight = FontWeight.W900)){
-                        append("")
+                        append("ГОД 9 – МАРС.")
+                        append("\n")
+                        append("ГОД СМЕРТИ И РАЗРУШЕНИЯ")
                     }
                 }
 
                 append("\n")
-
-                withStyle(style = ParagraphStyle(textAlign = TextAlign.Center)){
-                    withStyle(style = SpanStyle(fontWeight = FontWeight.W900)){
-                        append("")
-                    }
-                }
-
-                append("\n")
-                append(" ")
+                append(" Год, когда может быть разрушено всё то, что долго создавалось. В этот год человек может умереть (могут умереть близкие, заканчивается работа).")
 
                 append("\n")
                 append("\n")
                 withStyle(style = SpanStyle(fontWeight = FontWeight.W900)){
                     append("  В «плюсе»: ")
                 }
-                append(" ")
+                append("Механическое действие. Идеи. Возможности. Действие. Эмоции. Служение. Понимание, что разрушения неизбежны (родившись, человек должен знать, что умрёт).")
 
                 append("\n")
                 append("\n")
                 withStyle(style = SpanStyle(fontWeight = FontWeight.W900)){
                     append("  В «минусе»: ")
                 }
-                append(" ")
+                append("Ярость. Паранойя. Наивность. Разрушение.")
 
-                append(" ")
+                append(" Если человек боится, его год смерти неизбежен. В этот год делать максимум жертвоприношений.")
                 append(" ")
 
                 withStyle(style = ParagraphStyle(textAlign = TextAlign.Center)){
                     withStyle(style = SpanStyle(fontWeight = FontWeight.W900)){
-                        append("")
+                        append("Что нужно делать:")
                     }
                 }
 
-                append(" ●")
+                append("\n")
+                append(" ● Действовать.")
+                append("\n")
+                append(" ● Следить за здоровьем тела")
+                append("\n")
+                append(" ● Заниматься соревновательным спортом - придёт ощущение своих возможностей и уверенность в себе. Пройти курсы по принятию решения и действия, например, пройти курс “Спарта”.")
             }
             else -> buildAnnotatedString {}
         }

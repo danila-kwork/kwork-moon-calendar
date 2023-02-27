@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalMaterialApi::class)
-
 package ru.mooncalendar.ui.view
 
 import androidx.compose.animation.animateContentSize
@@ -24,6 +22,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import ru.mooncalendar.ui.theme.primaryBackground
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun ExpandableCardView(
     title: String,

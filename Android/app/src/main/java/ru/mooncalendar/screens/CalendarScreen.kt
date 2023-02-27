@@ -12,13 +12,13 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
@@ -30,10 +30,13 @@ import io.github.boguszpawlowski.composecalendar.selection.SelectionMode
 import io.github.boguszpawlowski.composecalendar.selection.SelectionState
 import ru.mooncalendar.common.extension.parseToBaseUiDateFormat
 import ru.mooncalendar.common.extension.toDate
-import ru.mooncalendar.data.auth.model.AdviceState
-import ru.mooncalendar.data.auth.model.getAdvice
+import ru.mooncalendar.data.auth.AuthRepository
+import ru.mooncalendar.data.auth.model.User
+import ru.mooncalendar.data.moonCalendar.model.getDayNumberColor
+import ru.mooncalendar.data.moonCalendar.model.getDayText
 import ru.mooncalendar.ui.theme.primaryBackground
 import ru.mooncalendar.ui.theme.primaryText
+import ru.mooncalendar.ui.theme.secondaryBackground
 import ru.mooncalendar.ui.theme.tintColor
 import java.text.SimpleDateFormat
 import java.time.LocalDate
@@ -50,10 +53,18 @@ fun CalendarScreen(
     val systemUiController = rememberSystemUiController()
     val primaryBackground = primaryBackground()
 
+    var dateInfoDialog by remember { mutableStateOf(false) }
+    var user by remember { mutableStateOf<User?>(null) }
+    val authRepository = remember(::AuthRepository)
+
     LaunchedEffect(key1 = Unit, block = {
         systemUiController.setStatusBarColor(
             color = primaryBackground
         )
+
+        authRepository.getUser({
+            user = it
+        })
     })
 
     Scaffold(
@@ -70,9 +81,7 @@ fun CalendarScreen(
                 actions = {
                     AnimatedVisibility(visible = state.selectionState.selection.isNotEmpty()) {
                         TextButton(onClick = {
-                            val formatDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-                            val date = formatDate.format(state.selectionState.selection.last().toDate())
-                            navController.navigate("main_screen?dateString=$date")
+                            dateInfoDialog = true
                         }) {
                             Text(
                                 text = "Далее",
@@ -88,6 +97,22 @@ fun CalendarScreen(
             modifier = Modifier.fillMaxSize(),
             color = primaryBackground()
         ) {
+
+            if(dateInfoDialog){
+                DateInfoDialog(
+                    user = user,
+                    date = state.selectionState.selection.last(),
+                    onDismissRequest = { dateInfoDialog = false },
+                    onFurtherClick = {
+                        dateInfoDialog = false
+
+                        val formatDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                        val date = formatDate.format(state.selectionState.selection.last().toDate())
+                        navController.navigate("main_screen?dateString=$date")
+                    }
+                )
+            }
+
             LazyColumn {
 
                 item {
@@ -96,8 +121,9 @@ fun CalendarScreen(
                     SelectableCalendar(
                         modifier = Modifier.fillMaxWidth(),
                         calendarState = state,
+                        showAdjacentMonths = false,
                         dayContent = {
-                            DefaultDay(state = it)
+                            DefaultDay(state = it, currentDayColor = primaryText())
                         },
                         monthHeader = {
                             DefaultMonthHeader(it)
@@ -118,7 +144,7 @@ fun CalendarScreen(
                         ) {}
 
                         Text(
-                            text = "Благоприятный день",
+                            text = "Успех через любовь, принятие, комфорт",
                             color = primaryText(),
                             modifier = Modifier.padding(5.dp)
                         )
@@ -136,7 +162,25 @@ fun CalendarScreen(
                         ) {}
 
                         Text(
-                            text = "Нейтральный день",
+                            text = "Успех через анализ и планирование",
+                            color = primaryText(),
+                            modifier = Modifier.padding(5.dp)
+                        )
+                    }
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Card(
+                            modifier = Modifier
+                                .padding(5.dp)
+                                .size(45.dp),
+                            shape = AbsoluteRoundedCornerShape(90.dp),
+                            backgroundColor = Color(0xFF288CE4)
+                        ) {}
+
+                        Text(
+                            text = "Успех через материальный результат",
                             color = primaryText(),
                             modifier = Modifier.padding(5.dp)
                         )
@@ -154,11 +198,15 @@ fun CalendarScreen(
                         ) {}
 
                         Text(
-                            text = "Неблагоприятный день",
+                            text = "Неблагоприятные дни, обнуление",
                             color = primaryText(),
                             modifier = Modifier.padding(5.dp)
                         )
                     }
+                }
+
+                item {
+                    Spacer(modifier = Modifier.height(50.dp))
                 }
             }
         }
@@ -176,38 +224,19 @@ private fun <T : SelectionState> DefaultDay(
 ) {
     val date = state.date
     val selectionState = state.selectionState
-    val day = date.dayOfMonth
 
     val isSelected = selectionState.isDateSelected(date)
-
-    val advice = getAdvice(date).distinctBy { it.state }
-
-    val backgroundColor = when (day) {
-        10, 20, 30 -> Color.Red
-        3, 6, 8 -> Color.Green
-        else -> {
-            if(advice.size == 1){
-                when(advice.last().state){
-                    AdviceState.Adverse -> Color.Yellow
-                    AdviceState.Neutral -> Color.Yellow
-                    AdviceState.Favorable -> Color.Green
-                }
-            }else {
-                Color.Yellow
-            }
-        }
-    }
 
     Card(
         modifier = modifier
             .aspectRatio(1f)
             .padding(2.dp),
         elevation = if (state.isFromCurrentMonth) 4.dp else 0.dp,
-        border = if (state.isCurrentDay) BorderStroke(1.dp, currentDayColor) else null,
+        border = if (state.isCurrentDay) BorderStroke(2.dp, currentDayColor) else null,
         contentColor = if (isSelected) selectionColor else contentColorFor(
             backgroundColor = MaterialTheme.colors.surface
         ),
-        backgroundColor = backgroundColor
+        backgroundColor = getDayNumberColor(date)
     ) {
         Box(
             modifier = Modifier.clickable {
@@ -264,4 +293,55 @@ fun DefaultMonthHeader(
             )
         }
     }
+}
+
+@SuppressLint("NewApi")
+@Composable
+private fun DateInfoDialog(
+    user: User?,
+    date: LocalDate,
+    onDismissRequest: () -> Unit,
+    onFurtherClick: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismissRequest,
+        shape = AbsoluteRoundedCornerShape(15.dp),
+        backgroundColor = primaryBackground(),
+        text = {
+            Column {
+                Divider(color = secondaryBackground())
+
+                Text(
+                    text = "Общий ${getDayText(date).first}",
+                    color = primaryText(),
+                    modifier = Modifier.padding(5.dp).fillMaxWidth(),
+                    textAlign = TextAlign.Center
+                )
+
+                if(user != null){
+                    Text(
+                        text = "Ваш личный день ${user.getMyDay(date).first}",
+                        color = primaryText(),
+                        modifier = Modifier.padding(5.dp).fillMaxWidth(),
+                        textAlign = TextAlign.Center
+                    )
+                }
+
+                Divider(color = secondaryBackground())
+            }
+        },
+        buttons = {
+            TextButton(
+                onClick = onFurtherClick,
+                modifier = Modifier.padding(5.dp)
+            ) {
+                Text(
+                    text = "Далее",
+                    color = tintColor,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+    )
 }

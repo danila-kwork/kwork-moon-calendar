@@ -66,8 +66,7 @@ import java.util.*
 enum class Tab(val text: String) {
     DESCRIPTION("Описание"),
     RECOMMENDATIONS("Рекомендации"),
-    MY_DESCRIPTION("Личные периоды"),
-    PEDOMETER("Шагомер")
+    MY_DESCRIPTION("Личные периоды")
 }
 
 @OptIn(ExperimentalMaterialApi::class)
@@ -337,7 +336,6 @@ fun MainScreen(
                                         when(it) {
                                             Tab.DESCRIPTION -> true
                                             Tab.RECOMMENDATIONS -> recommendationsTabVisibility
-                                            Tab.PEDOMETER -> pedometerTabVisibility
                                             Tab.MY_DESCRIPTION -> myMonthTabVisibility
                                         }
                                     }
@@ -354,7 +352,7 @@ fun MainScreen(
 
                         Box {
                             Text(
-                                text = text.ifEmpty { getShortRecommendations(date = date.toLocalDate()) },
+                                text = text,
                                 modifier = Modifier.padding(
                                     vertical = 2.dp,
                                     horizontal = 15.dp
@@ -441,7 +439,7 @@ fun MainScreen(
                                         key2 = date
                                     ) {
                                         Text(
-                                            text = getRecommendations(date = date.toLocalDate()),
+                                            text = getDayText(date = date.toLocalDate()).second,
                                             color = primaryText()
                                         )
                                     }
@@ -456,35 +454,8 @@ fun MainScreen(
                                     ),
                                     color = primaryText()
                                 )
-
-                                Text(
-                                    text = getRecommendations(date = date.toLocalDate()),
-                                    modifier = Modifier.padding(
-                                        vertical = 2.dp,
-                                        horizontal = 15.dp
-                                    ),
-                                    color = primaryText()
-                                )
                             }
 
-                            if(date.toLocalDate().dayOfMonth in listOf(10,20,30)){
-                                Text(
-                                    text = "Даже если в сумме сегодняшняя дата дает благоприятное число, по науке Сюцай это день, когда результаты наших действий могут быть обнулены!\n" +
-                                            "\n" +
-                                            "Следите за эмоциональным и физическим здоровьем, сохраняйте отношения!\n" +
-                                            "\n" +
-                                            "НЕ РЕКОМЕНДУЕТСЯ\n" +
-                                            "\n" +
-                                            "Не стоит подписывать значимые бумаги, крупные покупки, а также принять важные решения\n" +
-                                            "\n" +
-                                            "Не идти на поводу своего ЭГО, быть жесткими и азартными",
-                                    modifier = Modifier.padding(
-                                        vertical = 2.dp,
-                                        horizontal = 15.dp
-                                    ),
-                                    color = primaryText()
-                                )
-                            }
 
                             Text(
                                 text = "Заметка",
@@ -510,19 +481,24 @@ fun MainScreen(
                                     modifier = Modifier.padding(10.dp)
                                 )
                             }
+
+                            if(pedometerTabVisibility){
+                                Spacer(modifier = Modifier.height(30.dp))
+
+                                PedometerScreen(
+                                    date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(date)
+                                )
+                            }
                         }
-                        Tab.PEDOMETER -> PedometerScreen(
-                            date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(date)
-                        )
                         Tab.MY_DESCRIPTION -> {
                             if(user != null){
-                                val localDate = remember(date::toLocalDate)
+                                val localDate = date.toLocalDate()
 
                                 Divider(color = secondaryBackground())
 
                                 ExpandableCardView(
                                     title = "Личный год",
-                                    body = user!!.getMyYear(date.toLocalDate().year).second
+                                    body = user!!.getMyYear(localDate.year).second
                                 )
 
                                 Divider(color = secondaryBackground())

@@ -86,7 +86,7 @@ fun SettingsScreen(
                 backgroundColor = primaryBackground(),
                 title = {
                     Text(
-                        text = user?.email ?: "Профиль пользователя",
+                        text = "Настройки",
                         color = primaryText()
                     )
                 }
@@ -172,7 +172,7 @@ fun SettingsScreen(
                         )
 
                         Text(
-                            text = "${user?.birthday}\nЛичный год${user?.getMyYear(currentDate.year)}",
+                            text = "${user?.birthday}\n Ваш личный ${user?.getMyYearShortText(currentDate.year)?.text}",
                             fontWeight = FontWeight.W100,
                             modifier = Modifier.padding(5.dp)
                         )
@@ -271,26 +271,27 @@ fun SettingsScreen(
                     Divider(color = primaryText())
                 }
 
-                Column(
-                    modifier = Modifier.background(secondaryBackground())
-                ) {
-                    Divider(color = primaryText())
+                if(auth.currentUser != null) {
+                    Column(
+                        modifier = Modifier.background(secondaryBackground())
+                    ) {
 
-                    TextButton(onClick = {
-                        auth.signOut()
-                        navController.navigate("auth_screen")
-                    }) {
-                        Text(
-                            text = "Выйти",
-                            modifier = Modifier
-                                .padding(5.dp)
-                                .fillMaxWidth(),
-                            textAlign = TextAlign.Center,
-                            color = Color.Red
-                        )
+                        TextButton(onClick = {
+                            auth.signOut()
+                            navController.navigate("auth_screen")
+                        }) {
+                            Text(
+                                text = "Выйти",
+                                modifier = Modifier
+                                    .padding(5.dp)
+                                    .fillMaxWidth(),
+                                textAlign = TextAlign.Center,
+                                color = Color.Red
+                            )
+                        }
+
+                        Divider(color = primaryText())
                     }
-
-                    Divider(color = primaryText())
                 }
 
 
@@ -350,6 +351,10 @@ fun SettingsScreen(
                         )
                     }
                 }
+            }
+
+            item {
+                Spacer(modifier = Modifier.height(60.dp))
             }
         }
     }
