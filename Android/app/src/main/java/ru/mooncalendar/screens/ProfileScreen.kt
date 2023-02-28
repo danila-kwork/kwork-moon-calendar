@@ -421,7 +421,7 @@ fun Subscriptions(
                             )
 
                             Text(
-                                text = "${item.priceRu.first} ${item.priceRu.second}",
+                                text = "${item.priceKz.first} ${item.priceKz.second}",
                                 fontWeight = FontWeight.W900,
                                 modifier = Modifier.padding(10.dp),
                                 color = primaryText(),

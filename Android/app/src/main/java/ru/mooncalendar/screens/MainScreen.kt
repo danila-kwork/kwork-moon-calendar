@@ -59,7 +59,9 @@ import ru.mooncalendar.ui.theme.primaryBackground
 import ru.mooncalendar.ui.theme.primaryText
 import ru.mooncalendar.ui.theme.secondaryBackground
 import ru.mooncalendar.ui.theme.tintColor
+import ru.mooncalendar.ui.view.BaseLottieAnimation
 import ru.mooncalendar.ui.view.ExpandableCardView
+import ru.mooncalendar.ui.view.LottieAnimationType
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -104,9 +106,9 @@ fun MainScreen(
     var isSubscription by remember { mutableStateOf(false) }
     var recommendationsTabVisibility by remember { mutableStateOf(false) }
     var pedometerTabVisibility by remember { mutableStateOf(false) }
-    var myYearTabVisibility by remember { mutableStateOf(false) }
     var myMonthTabVisibility by remember { mutableStateOf(false) }
     var infoVisibility by remember { mutableStateOf(false) }
+    var loading by remember { mutableStateOf(true) }
 
     var blur by remember { mutableStateOf(false) }
 
@@ -120,10 +122,6 @@ fun MainScreen(
 
         recommendationsTabVisibility = user != null && isSubscription
         pedometerTabVisibility = user != null && isSubscription
-
-        myYearTabVisibility = user != null && isSubscription && subscriptionStatement != null
-                && (subscriptionStatement?.type != SubscriptionType.LITE_MIN
-                && subscriptionStatement?.type != SubscriptionType.LITE_MAX)
 
         myMonthTabVisibility = user != null && isSubscription && subscriptionStatement != null
                 && (subscriptionStatement?.type != SubscriptionType.LITE_MIN
@@ -149,19 +147,34 @@ fun MainScreen(
             date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(dateString)!!
         }
 
-        authRepository.getUser(onSuccess = { user = it })
+        if(auth.currentUser == null){
+            delay(2000L)
+            loading = false
+        }else {
+            authRepository.getUser(onSuccess = {
+                scope.launch {
+                    user = it
+                    delay(2000L)
+                    loading = false
+                }
+            })
 
-        subscriptionStatementRepository.getByUserId(
-            onSuccess = {
-                subscriptionStatement = it
-            },
-            onFailure = {  }
-        )
+            subscriptionStatementRepository.getByUserId(
+                onSuccess = {
+                    scope.launch {
+                        subscriptionStatement = it
+                        delay(2000L)
+                        loading = false
+                    }
+                },
+                onFailure = {  }
+            )
+        }
     })
 
     LaunchedEffect(key1 = date, block = {
 
-        infoRepository.get(date = date.parseToBaseDateFormat()) { info = null; info = it }
+        infoRepository.get(date = date.parseToDateFormat()) { info = null; info = it }
 
         moonCalendarRepository.getMoonCalendar(
             filterDate = date,
@@ -201,335 +214,360 @@ fun MainScreen(
                 )
             }
 
-            LazyColumn {
+            if(!loading){
+                LazyColumn {
 
-                item {
-                    Box {
-                        Icon(
-                            bitmap = Bitmap.createScaledBitmap(
-                                BitmapFactory.decodeResource(context.resources, R.drawable.ellipse),
-                                screenWidthDp,
-                                (screenHeightDp / 8),
-                                false
-                            ).asImageBitmap(),
-                            contentDescription = null,
-                            modifier = Modifier
-                                .height((screenHeightDp / 8).dp)
-                                .width(screenWidthDp.dp),
-                            tint = Color(0xFF166239) //moonCalendar.firstOrNull()?.moonCalendarColor()
-                                //?: LocalContentColor.current.copy(alpha = LocalContentAlpha.current)
-                        )
-
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Image(
-                                painter = painterResource(id = R.drawable.logo),
+                    item {
+                        Box {
+                            Icon(
+                                bitmap = Bitmap.createScaledBitmap(
+                                    BitmapFactory.decodeResource(context.resources, R.drawable.ellipse),
+                                    screenWidthDp,
+                                    (screenHeightDp / 8),
+                                    false
+                                ).asImageBitmap(),
                                 contentDescription = null,
                                 modifier = Modifier
-                                    .size(80.dp)
-                                    .padding(5.dp)
+                                    .height((screenHeightDp / 8).dp)
+                                    .width(screenWidthDp.dp),
+                                tint = Color(0xFF166239) //moonCalendar.firstOrNull()?.moonCalendarColor()
+                                //?: LocalContentColor.current.copy(alpha = LocalContentAlpha.current)
                             )
 
-                            Text(
-                                text = if(user != null)
-                                    "${getDayText(date.toLocalDate()).first}\nЛичный день ${user!!.getMyDay(date.toLocalDate()).first}"
-                                else
-                                    getDayText(date.toLocalDate()).first,
-                                color = Color.White,
-                                textAlign = TextAlign.Center,
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.W900
-                            )
-
-                            Card(
-                                modifier = Modifier.padding(10.dp),
-                                shape = AbsoluteRoundedCornerShape(90.dp),
-                                backgroundColor = tintColor,
-                                onClick = {
-                                    if(user != null && isSubscription){
-                                        navController.navigate("calendar_screen")
-                                    }else {
-                                        if(auth.currentUser == null)
-                                            navController.navigate("auth_screen")
-                                        else
-                                            navController.navigate("profile_screen")
-                                    }
-                                }
-                            ){
-                                Icon(
-                                    painter = painterResource(id = R.drawable.calendar),
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Image(
+                                    painter = painterResource(id = R.drawable.logo),
                                     contentDescription = null,
                                     modifier = Modifier
-                                        .size(40.dp)
-                                        .padding(5.dp),
-                                    tint = primaryText()
+                                        .size(80.dp)
+                                        .padding(5.dp)
                                 )
-                            }
-                        }
-                    }
-                }
 
-                item {
+                                Text(
+                                    text = if(user != null)
+                                        "${getDayText(date.toLocalDate()).first}\nЛичный день ${user!!.getMyDay(date.toLocalDate()).first}"
+                                    else
+                                        getDayText(date.toLocalDate()).first,
+                                    color = Color.White,
+                                    textAlign = TextAlign.Center,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.W900
+                                )
 
-                    Spacer(modifier = Modifier.height(5.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        IconButton(
-                            modifier = Modifier.padding(5.dp),
-                            onClick = {
-                                date = date.toLocalDate().minusDays(1).toDate()
-                            }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.KeyboardArrowLeft,
-                                contentDescription = null,
-                                tint = tintColor
-                            )
-                        }
-
-                        Text(
-                            text = date.parseToBaseUiDateFormat(),
-                            fontWeight = FontWeight.W900,
-                            modifier = Modifier.padding(5.dp)
-                        )
-
-                        IconButton(
-                            modifier = Modifier.padding(5.dp),
-                            onClick = {
-                                date = date.toLocalDate().plusDays(1).toDate()
-                            }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.KeyboardArrowRight,
-                                contentDescription = null,
-                                tint = tintColor
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(5.dp))
-                }
-
-                item {
-
-                    Spacer(modifier = Modifier.height(5.dp))
-
-                    LazyRow(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        item {
-                            Tab.values().forEach {
-                                TabItem(
-                                    tab = it,
-                                    select = tab == it,
-                                    onClick = { tab = it },
-                                    visibilityItem = {
-                                        when(it) {
-                                            Tab.DESCRIPTION -> true
-                                            Tab.RECOMMENDATIONS -> recommendationsTabVisibility
-                                            Tab.MY_DESCRIPTION -> myMonthTabVisibility
+                                Card(
+                                    modifier = Modifier.padding(10.dp),
+                                    shape = AbsoluteRoundedCornerShape(90.dp),
+                                    backgroundColor = tintColor,
+                                    onClick = {
+                                        if(user != null && isSubscription){
+                                            navController.navigate("calendar_screen")
+                                        }else {
+                                            if(auth.currentUser == null)
+                                                navController.navigate("auth_screen")
+                                            else
+                                                navController.navigate("profile_screen")
                                         }
                                     }
-                                )
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(5.dp))
-
-                    if(blur && tab == Tab.DESCRIPTION){
-
-                        val text = getDayTextShort(date = date.toLocalDate()).second
-
-                        Box {
-                            Text(
-                                text = text,
-                                modifier = Modifier.padding(
-                                    vertical = 2.dp,
-                                    horizontal = 15.dp
-                                ),
-                                color = primaryText()
-                            )
-                        }
-                    }
-                }
-
-                item {
-                    when(tab) {
-                        Tab.RECOMMENDATIONS -> {
-                            val advice = getAdvice(date = date.toLocalDate())
-
-                            Spacer(modifier = Modifier.height(5.dp))
-
-                            repeat(advice.size) {
-                                val adviceItem = advice[it]
-
-                                Text(
-                                    text = adviceItem.parameter,
-                                    fontWeight = FontWeight.W900,
-                                    modifier = Modifier.padding(5.dp)
-                                )
-
-                                Text(
-                                    text = adviceItem.state.text,
-                                    fontWeight = FontWeight.W100,
-                                    modifier = Modifier.padding(5.dp)
-                                )
-
-                                Divider(color = secondaryBackground())
-                            }
-                        }
-                        Tab.DESCRIPTION -> {
-
-                            if(infoVisibility){
-                                info?.let {
-                                    Card(
+                                ){
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.calendar),
+                                        contentDescription = null,
                                         modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(10.dp),
-                                        shape = AbsoluteRoundedCornerShape(15.dp),
-                                        backgroundColor = Color(0xFFFFF1E4)
-                                    ) {
-                                        Column {
-                                            Text(
-                                                text = "Aффирмация дня",
-                                                fontWeight = FontWeight.W900,
-                                                modifier = Modifier.padding(horizontal = 15.dp, vertical = 3.dp),
-                                                fontSize = 20.sp,
-                                                color = primaryText()
-                                            )
-
-                                            Text(
-                                                text = it.info,
-                                                color = primaryText(),
-                                                modifier = Modifier.padding(10.dp)
-                                            )
-                                        }
-                                    }
-
-                                    Spacer(modifier = Modifier.height(10.dp))
+                                            .size(40.dp)
+                                            .padding(5.dp),
+                                        tint = primaryText()
+                                    )
                                 }
                             }
+                        }
+                    }
 
-                            if(blur){
-                                Box {
-                                    Cloudy(
-                                        modifier = Modifier
-                                            .clickable {
-                                                if (auth.currentUser == null)
+                    item {
+
+                        Spacer(modifier = Modifier.height(5.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            IconButton(
+                                modifier = Modifier.padding(5.dp),
+                                onClick = {
+                                    date = date.toLocalDate().minusDays(1).toDate()
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.KeyboardArrowLeft,
+                                    contentDescription = null,
+                                    tint = tintColor
+                                )
+                            }
+
+                            Text(
+                                text = date.parseToBaseUiDateFormat(),
+                                fontWeight = FontWeight.W900,
+                                modifier = Modifier.padding(5.dp)
+                            )
+
+                            IconButton(
+                                modifier = Modifier.padding(5.dp),
+                                onClick = {
+                                    date = date.toLocalDate().plusDays(1).toDate()
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.KeyboardArrowRight,
+                                    contentDescription = null,
+                                    tint = tintColor
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(5.dp))
+                    }
+
+                    item {
+
+                        Spacer(modifier = Modifier.height(5.dp))
+
+                        LazyRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            item {
+                                Tab.values().forEach {
+                                    TabItem(
+                                        tab = it,
+                                        select = tab == it,
+                                        onClick = {
+                                            if(it == Tab.RECOMMENDATIONS && !recommendationsTabVisibility){
+                                                if(auth.currentUser == null)
                                                     navController.navigate("auth_screen")
                                                 else
                                                     navController.navigate("profile_screen")
+                                            }else if(it == Tab.MY_DESCRIPTION && !myMonthTabVisibility){
+                                                if(auth.currentUser == null)
+                                                    navController.navigate("auth_screen")
+                                                else
+                                                    navController.navigate("profile_screen")
+                                            }else {
+                                                tab = it
                                             }
-                                            .padding(
-                                                vertical = 2.dp,
-                                                horizontal = 15.dp
-                                            ),
-                                        radius = 15,
-                                        key1 = blur,
-                                        key2 = date
-                                    ) {
-                                        Text(
-                                            text = getDayText(date = date.toLocalDate()).second,
-                                            color = primaryText()
-                                        )
-                                    }
+                                        },
+                                        visibilityItem = { true }
+                                    )
                                 }
                             }
+                        }
 
-                            if(!blur){
+                        Spacer(modifier = Modifier.height(5.dp))
+
+                        if(blur && tab == Tab.DESCRIPTION){
+
+                            val text = getDayTextShort(date = date.toLocalDate()).second
+
+                            Box {
                                 Text(
-                                    text = getDayText(date = date.toLocalDate()).second,
+                                    text = text,
                                     modifier = Modifier.padding(
+                                        vertical = 2.dp,
                                         horizontal = 15.dp
                                     ),
                                     color = primaryText()
                                 )
                             }
-
-
-                            Text(
-                                text = "Заметка",
-                                fontWeight = FontWeight.W900,
-                                modifier = Modifier.padding(horizontal = 15.dp, vertical = 3.dp),
-                                fontSize = 26.sp
-                            )
-
-                            Card(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(10.dp),
-                                shape = AbsoluteRoundedCornerShape(15.dp),
-                                backgroundColor = tintColor,
-                                onClick = {
-                                    noteDescEditDialog = true
-                                }
-                            ) {
-                                Text(
-                                    text = note?.description
-                                        ?: "Пример текста: Что вы ощущаете и какие у вас отношения с окружающими в этот день?",
-                                    color = primaryText(),
-                                    modifier = Modifier.padding(10.dp)
-                                )
-                            }
-
-                            if(pedometerTabVisibility){
-                                Spacer(modifier = Modifier.height(30.dp))
-
-                                PedometerScreen(
-                                    date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(date)
-                                )
-                            }
-                        }
-                        Tab.MY_DESCRIPTION -> {
-                            if(user != null){
-                                val localDate = date.toLocalDate()
-
-                                Divider(color = secondaryBackground())
-
-                                ExpandableCardView(
-                                    title = "Личный год",
-                                    body = user!!.getMyYear(localDate.year).second
-                                )
-
-                                Divider(color = secondaryBackground())
-
-                                ExpandableCardView(
-                                    title = "Личный месяц",
-                                    body = user!!.getMyMonth(
-                                        localDate.year,
-                                        localDate.month.value
-                                    ).second
-                                )
-
-                                Divider(color = secondaryBackground())
-                                ExpandableCardView(
-                                    title = "Личный день",
-                                    body = user!!.getMyDay(
-                                        localDate
-                                    ).second
-                                )
-                                Divider(color = secondaryBackground())
-
-                                Spacer(modifier = Modifier.height(5.dp))
-                            }
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(30.dp))
-                }
+                    item {
+                        when(tab) {
+                            Tab.RECOMMENDATIONS -> {
+                                val advice = getAdvice(date = date.toLocalDate())
 
-                item {
-                    Spacer(modifier = Modifier.height(50.dp))
+                                Spacer(modifier = Modifier.height(5.dp))
+
+                                repeat(advice.size) {
+                                    val adviceItem = advice[it]
+
+                                    Text(
+                                        text = adviceItem.parameter,
+                                        fontWeight = FontWeight.W900,
+                                        modifier = Modifier.padding(5.dp)
+                                    )
+
+                                    Text(
+                                        text = adviceItem.state.text,
+                                        fontWeight = FontWeight.W100,
+                                        modifier = Modifier.padding(5.dp)
+                                    )
+
+                                    Divider(color = secondaryBackground())
+                                }
+                            }
+                            Tab.DESCRIPTION -> {
+
+                                if(infoVisibility){
+                                    info?.let {
+                                        Card(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(10.dp),
+                                            shape = AbsoluteRoundedCornerShape(15.dp),
+                                            backgroundColor = Color(0xFFFFF1E4)
+                                        ) {
+                                            Column {
+                                                Text(
+                                                    text = "Aффирмация дня",
+                                                    fontWeight = FontWeight.W900,
+                                                    modifier = Modifier.padding(horizontal = 15.dp, vertical = 3.dp),
+                                                    fontSize = 20.sp,
+                                                    color = primaryText()
+                                                )
+
+                                                Text(
+                                                    text = it.info,
+                                                    color = primaryText(),
+                                                    modifier = Modifier.padding(10.dp)
+                                                )
+                                            }
+                                        }
+
+                                        Spacer(modifier = Modifier.height(10.dp))
+                                    }
+                                }
+
+                                if(blur){
+                                    Box {
+                                        Cloudy(
+                                            modifier = Modifier
+                                                .clickable {
+                                                    if (auth.currentUser == null)
+                                                        navController.navigate("auth_screen")
+                                                    else
+                                                        navController.navigate("profile_screen")
+                                                }
+                                                .padding(
+                                                    vertical = 2.dp,
+                                                    horizontal = 15.dp
+                                                ),
+                                            radius = 25,
+                                            key1 = blur,
+                                            key2 = date
+                                        ) {
+                                            Text(
+                                                text = getDayText(date = date.toLocalDate()).second,
+                                                color = primaryText()
+                                            )
+                                        }
+                                    }
+                                }
+
+                                if(!blur){
+                                    Text(
+                                        text = getDayText(date = date.toLocalDate()).second,
+                                        modifier = Modifier.padding(
+                                            horizontal = 15.dp
+                                        ),
+                                        color = primaryText()
+                                    )
+                                }
+
+
+                                Text(
+                                    text = "Заметка",
+                                    fontWeight = FontWeight.W900,
+                                    modifier = Modifier.padding(horizontal = 15.dp, vertical = 3.dp),
+                                    fontSize = 26.sp
+                                )
+
+                                Card(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(10.dp),
+                                    shape = AbsoluteRoundedCornerShape(15.dp),
+                                    backgroundColor = tintColor,
+                                    onClick = {
+                                        noteDescEditDialog = true
+                                    }
+                                ) {
+                                    Text(
+                                        text = note?.description
+                                            ?: "Пример текста: Что вы ощущаете и какие у вас отношения с окружающими в этот день?",
+                                        color = primaryText(),
+                                        modifier = Modifier.padding(10.dp)
+                                    )
+                                }
+
+                                if(pedometerTabVisibility){
+                                    Spacer(modifier = Modifier.height(30.dp))
+
+                                    PedometerScreen(
+                                        date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(date)
+                                    )
+                                }
+                            }
+                            Tab.MY_DESCRIPTION -> {
+                                if(user != null){
+                                    val localDate = date.toLocalDate()
+
+                                    Divider(color = secondaryBackground())
+
+                                    ExpandableCardView(
+                                        title = "Личный день",
+                                        body = user!!.getMyDay(
+                                            localDate
+                                        ).second
+                                    )
+
+                                    Divider(color = secondaryBackground())
+
+                                    ExpandableCardView(
+                                        title = "Личный месяц",
+                                        body = user!!.getMyMonth(
+                                            localDate.year,
+                                            localDate.month.value
+                                        ).second
+                                    )
+
+                                    Divider(color = secondaryBackground())
+
+                                    ExpandableCardView(
+                                        title = "Личный год",
+                                        body = user!!.getMyYear(localDate.year).second
+                                    )
+
+                                    Divider(color = secondaryBackground())
+
+                                    Spacer(modifier = Modifier.height(5.dp))
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(30.dp))
+                    }
+
+                    item {
+                        Spacer(modifier = Modifier.height(50.dp))
+                    }
+                }
+            }else {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    BaseLottieAnimation(
+                        type = LottieAnimationType.Loading,
+                        modifier = Modifier
+                            .padding(5.dp)
+                            .fillMaxSize()
+                    )
                 }
             }
         }

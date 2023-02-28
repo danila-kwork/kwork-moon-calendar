@@ -189,6 +189,10 @@ class MainActivity : ComponentActivity() {
                             composable("subscription_info_screen"){
                                 SubscriptionInfoScreen()
                             }
+
+                            composable("password_rest_screen"){
+                                PasswordRestScreen()
+                            }
                         }
                     )
                 }

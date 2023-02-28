@@ -27,6 +27,16 @@ fun Date.parseToBaseDateFormat(): String {
     return dateFormat.format(this)
 }
 
+fun Date.parseToDateFormat(): String {
+    val dateFormat = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
+    return dateFormat.format(this)
+}
+
+fun Date.parserFormat(): String {
+    val dateFormat = SimpleDateFormat("ddMMyyyy", Locale.getDefault())
+    return dateFormat.format(this)
+}
+
 fun Date.isToday(): Boolean {
     return DateUtils.isToday(this.time)
 }

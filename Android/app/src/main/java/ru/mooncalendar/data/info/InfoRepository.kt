@@ -1,11 +1,15 @@
 package ru.mooncalendar.data.info
 
+import android.annotation.SuppressLint
+import android.icu.text.SimpleDateFormat
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
+import ru.mooncalendar.common.extension.parseToDateFormat
+import java.util.*
 
 data class Info(
-    val date: String,
+    var date: String,
     val info: String
 )
 
@@ -38,8 +42,13 @@ class InfoRepository {
             }
     }
 
+    @SuppressLint("NewApi")
     fun create(info: Info, onSuccess: () -> Unit){
-        database.reference.child("info").child(info.date).setValue(info)
+
+        val fromFormat = SimpleDateFormat("ddMMyyyy", Locale.getDefault())
+        val date = fromFormat.parse(info.date).parseToDateFormat()
+
+        database.reference.child("info").child(date).setValue(info.apply { this.date = date })
             .addOnSuccessListener { onSuccess() }
     }
 }

@@ -1,10 +1,11 @@
 package ru.mooncalendar.screens
 
+import android.util.Log
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -14,18 +15,18 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import ru.mooncalendar.R
+import ru.mooncalendar.common.MaskVisualTransformation
 import ru.mooncalendar.common.openBrowser
 import ru.mooncalendar.data.auth.AuthRepository
 import ru.mooncalendar.ui.theme.primaryBackground
 import ru.mooncalendar.ui.theme.primaryText
 import ru.mooncalendar.ui.theme.tintColor
-import ru.mooncalendar.ui.view.BaseLottieAnimation
-import ru.mooncalendar.ui.view.LottieAnimationType
 
 @Composable
 fun AuthScreen(
@@ -124,6 +125,7 @@ fun SignOn(
     var errorMessage by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var birthdayText by remember { mutableStateOf("") }
     var birthday by remember { mutableStateOf("") }
     var privacyPolicy by remember { mutableStateOf(false) }
 
@@ -156,7 +158,9 @@ fun SignOn(
                     text = errorMessage,
                     fontWeight = FontWeight.W900,
                     color = Color.Red,
-                    modifier = Modifier.padding(5.dp).fillMaxWidth(),
+                    modifier = Modifier
+                        .padding(5.dp)
+                        .fillMaxWidth(),
                     textAlign = TextAlign.Center
                 )
 
@@ -173,15 +177,20 @@ fun SignOn(
                 )
 
                 Text(
-                    text = "В формате ДД-ММ-ГГ",
+                    text = "В формате ДД-ММ-ГГГГ",
                     modifier = Modifier.padding(end = 5.dp),
                     color = primaryText(),
                     fontWeight = FontWeight.W900
                 )
 
                 OutlinedTextField(
-                    value = birthday,
-                    onValueChange = { birthday = it },
+                    value = birthdayText,
+                    onValueChange = {
+                        if(it.length <= 8){
+                            birthdayText = it
+                            birthday = it
+                        }
+                    },
                     modifier = Modifier.padding(5.dp),
                     label = {
                         Text(
@@ -190,9 +199,13 @@ fun SignOn(
                         )
                     },
                     shape = AbsoluteRoundedCornerShape(10.dp),
+                    visualTransformation = MaskVisualTransformation("##-##-####"),
                     colors = TextFieldDefaults.outlinedTextFieldColors(
                         backgroundColor = primaryBackground(),
                         textColor = primaryText()
+                    ),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number
                     )
                 )
 
@@ -255,7 +268,10 @@ fun SignOn(
                             }else {
                                 errorMessage = "Согласитесь с политикой конфиденциальности"
                             }
+                        }catch (e: IllegalArgumentException){
+                            errorMessage = "Заполните все поля"
                         }catch (e:Exception){
+                            Log.e("try", e.toString())
                             errorMessage = e.message.toString()
                         }
                     },
@@ -273,7 +289,7 @@ fun SignOn(
             }
 
             item {
-                Spacer(modifier = Modifier.height(50.dp))
+                Spacer(modifier = Modifier.height(60.dp))
             }
         }
     }
@@ -324,7 +340,9 @@ fun SignIn(
                     text = errorMessage,
                     fontWeight = FontWeight.W900,
                     color = Color.Red,
-                    modifier = Modifier.padding(5.dp).fillMaxWidth(),
+                    modifier = Modifier
+                        .padding(5.dp)
+                        .fillMaxWidth(),
                     textAlign = TextAlign.Center
                 )
 
@@ -354,6 +372,13 @@ fun SignIn(
 
                 Spacer(modifier = Modifier.height(20.dp))
 
+                TextButton(
+                    modifier = Modifier.padding(5.dp),
+                    onClick = { navController.navigate("password_rest_screen") }
+                ) {
+                    Text(text = "Забыл пароль", color = primaryText())
+                }
+
                 Button(
                     modifier = Modifier
                         .padding(
@@ -371,6 +396,8 @@ fun SignIn(
                                 onSuccess = { navController.navigate("main_screen") },
                                 onFailure = { errorMessage = it  }
                             )
+                        }catch(e: IllegalArgumentException){
+                            errorMessage = "Заполните все поля"
                         }catch (e:Exception){
                             errorMessage = e.message.toString()
                         }

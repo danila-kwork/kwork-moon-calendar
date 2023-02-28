@@ -2,14 +2,19 @@ package ru.mooncalendar.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import ru.mooncalendar.common.MaskVisualTransformation
 import ru.mooncalendar.common.extension.parseToBaseDateFormat
+import ru.mooncalendar.common.extension.parseToDateFormat
+import ru.mooncalendar.common.extension.parserFormat
 import ru.mooncalendar.data.info.Info
 import ru.mooncalendar.data.info.InfoRepository
 import ru.mooncalendar.ui.theme.primaryBackground
@@ -29,7 +34,7 @@ fun CreateInfoScreen(
     var info by remember { mutableStateOf("") }
 
     LaunchedEffect(key1 = Unit, block = {
-        date = Date().parseToBaseDateFormat()
+        date = Date().parserFormat()
     })
 
     Surface(
@@ -43,14 +48,18 @@ fun CreateInfoScreen(
         ) {
             item {
                 Text(
-                    text = "Укажите дату в формате 2005-09-19",
+                    text = "Укажите дату В формате ДД-ММ-ГГГГ",
                     color = primaryText(),
                     modifier = Modifier.padding(5.dp)
                 )
 
                 OutlinedTextField(
                     value = date,
-                    onValueChange = { date = it },
+                    onValueChange = {
+                        if(it.length <= 8){
+                            date = it
+                        }
+                    },
                     modifier = Modifier.padding(5.dp),
                     label = {
                         Text(
@@ -58,10 +67,14 @@ fun CreateInfoScreen(
                             color = primaryText()
                         )
                     },
+                    visualTransformation = MaskVisualTransformation("##-##-####"),
                     colors = TextFieldDefaults.textFieldColors(
                         backgroundColor = primaryBackground(),
                         cursorColor = tintColor,
                         textColor = primaryText()
+                    ),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number
                     )
                 )
 

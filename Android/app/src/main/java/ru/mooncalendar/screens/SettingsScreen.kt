@@ -2,6 +2,7 @@ package ru.mooncalendar.screens
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.icu.text.SimpleDateFormat
 import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -30,6 +31,9 @@ import com.google.firebase.ktx.Firebase
 import io.github.boguszpawlowski.composecalendar.kotlinxDateTime.now
 import kotlinx.datetime.LocalDate
 import ru.mooncalendar.R
+import ru.mooncalendar.common.MaskVisualTransformation
+import ru.mooncalendar.common.extension.parseToDateFormat
+import ru.mooncalendar.common.extension.parserFormat
 import ru.mooncalendar.common.openBrowser
 import ru.mooncalendar.data.auth.AuthRepository
 import ru.mooncalendar.data.auth.model.User
@@ -37,6 +41,7 @@ import ru.mooncalendar.data.auth.model.UserRole
 import ru.mooncalendar.ui.theme.primaryBackground
 import ru.mooncalendar.ui.theme.primaryText
 import ru.mooncalendar.ui.theme.secondaryBackground
+import java.util.*
 
 
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter", "IntentReset")
@@ -360,6 +365,7 @@ fun SettingsScreen(
     }
 }
 
+@SuppressLint("NewApi")
 @Composable
 private fun AlertEditDate(
     currentDate: String,
@@ -371,7 +377,8 @@ private fun AlertEditDate(
 
     LaunchedEffect(key1 = Unit, block = {
         textFieldFocusRequester.requestFocus()
-        date = currentDate
+        val fromFormat = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
+        date = fromFormat.parse(currentDate).parserFormat()
     })
 
     AlertDialog(
@@ -384,7 +391,11 @@ private fun AlertEditDate(
                     .padding(5.dp)
                     .focusRequester(textFieldFocusRequester),
                 value = date,
-                onValueChange = { date = it },
+                onValueChange = {
+                    if(it.length <= 8){
+                        date = it
+                    }
+                },
                 colors = TextFieldDefaults.textFieldColors(
                     backgroundColor = primaryBackground(),
                     textColor = primaryText()
@@ -395,9 +406,10 @@ private fun AlertEditDate(
                 keyboardActions = KeyboardActions(onSend = {
                     editDate(date)
                 }),
+                visualTransformation = MaskVisualTransformation("##-##-####"),
                 label = {
                     Text(
-                        text = "В формате ДД-ММ-ГГ",
+                        text = "В формате ДД-ММ-ГГГГ",
                         color = primaryText()
                     )
                 }
