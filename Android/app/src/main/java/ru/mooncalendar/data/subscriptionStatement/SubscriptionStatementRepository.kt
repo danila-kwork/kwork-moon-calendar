@@ -1,6 +1,6 @@
 package ru.mooncalendar.data.subscriptionStatement
 
-import com.google.firebase.auth.ktx.auth
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
 import ru.mooncalendar.data.subscriptionStatement.model.SubscriptionStatement
@@ -10,7 +10,7 @@ import java.util.*
 class SubscriptionStatementRepository {
 
     private val db = Firebase.database
-    private val auth = Firebase.auth
+    private val auth = FirebaseAuth.getInstance()
 
     fun getAll(
         onSuccess: (List<SubscriptionStatement>) -> Unit,

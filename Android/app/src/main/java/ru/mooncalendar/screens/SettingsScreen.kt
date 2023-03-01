@@ -26,13 +26,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import com.google.firebase.auth.ktx.auth
-import com.google.firebase.ktx.Firebase
+import com.google.firebase.auth.FirebaseAuth
 import io.github.boguszpawlowski.composecalendar.kotlinxDateTime.now
 import kotlinx.datetime.LocalDate
 import ru.mooncalendar.R
 import ru.mooncalendar.common.MaskVisualTransformation
-import ru.mooncalendar.common.extension.parseToDateFormat
 import ru.mooncalendar.common.extension.parserFormat
 import ru.mooncalendar.common.openBrowser
 import ru.mooncalendar.data.auth.AuthRepository
@@ -53,7 +51,7 @@ fun SettingsScreen(
     val authRepository = remember(::AuthRepository)
     var user by remember { mutableStateOf<User?>(null) }
     var alertEditDate by remember { mutableStateOf(false) }
-    val auth = remember(Firebase::auth)
+    val auth = remember { FirebaseAuth.getInstance() }
     val currentDate by remember { mutableStateOf(LocalDate.now()) }
 
     val systemUiController = rememberSystemUiController()

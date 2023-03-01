@@ -23,7 +23,7 @@ import androidx.navigation.navArgument
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import com.google.firebase.auth.ktx.auth
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.ktx.Firebase
 import ru.mooncalendar.screens.*
 import ru.mooncalendar.ui.theme.*
@@ -51,7 +51,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             MoonCalendarTheme {
                 val navController = rememberNavController()
-                val auth = remember(Firebase::auth)
+                val auth = remember { FirebaseAuth.getInstance() }
                 var bottomBar by remember { mutableStateOf(BottomBar.CALENDAR) }
 
                 val systemUiController = rememberSystemUiController()

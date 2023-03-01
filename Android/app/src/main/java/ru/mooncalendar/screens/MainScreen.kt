@@ -36,8 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import com.google.firebase.auth.ktx.auth
-import com.google.firebase.ktx.Firebase
+import com.google.firebase.auth.FirebaseAuth
 import com.skydoves.cloudy.Cloudy
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -84,7 +83,7 @@ fun MainScreen(
     val screenHeightDp = LocalConfiguration.current.screenHeightDp
 
     val scope = rememberCoroutineScope()
-    val auth = remember(Firebase::auth)
+    val auth = remember { FirebaseAuth.getInstance() }
     val moonCalendarRepository = remember { MoonCalendarRepository() }
     val authRepository = remember { AuthRepository() }
     val infoRepository = remember(::InfoRepository)

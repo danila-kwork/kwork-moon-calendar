@@ -3,11 +3,7 @@ package ru.mooncalendar.data.auth
 import android.annotation.SuppressLint
 import android.icu.text.SimpleDateFormat
 import android.util.Log
-import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
-import com.google.firebase.auth.FirebaseAuthInvalidUserException
-import com.google.firebase.auth.FirebaseAuthUserCollisionException
-import com.google.firebase.auth.FirebaseAuthWeakPasswordException
-import com.google.firebase.auth.ktx.auth
+import com.google.firebase.auth.*
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
 import ru.mooncalendar.common.extension.parseToDateFormat
@@ -17,7 +13,7 @@ import java.util.*
 
 class AuthRepository {
 
-    private val auth = Firebase.auth
+    private val auth = FirebaseAuth.getInstance()
     private val db = Firebase.database
 
     fun auth(
@@ -62,7 +58,7 @@ class AuthRepository {
         auth.createUserWithEmailAndPassword(email, password)
             .addOnSuccessListener {
                 createUser(
-                    id = Firebase.auth.uid!!,
+                    id = auth.uid!!,
                     email = email,
                     birthday = date,
                     password = password,
@@ -102,7 +98,7 @@ class AuthRepository {
         onSuccess:() -> Unit,
         onFailure:(message:String) -> Unit = {}
     ) {
-        val user = Firebase.auth.currentUser ?: return
+        val user = auth.currentUser ?: return
         val simpleDateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
         val date = simpleDateFormat.format(Date())
 
@@ -124,7 +120,7 @@ class AuthRepository {
         onSuccess:(User) -> Unit,
         onFailure:(message:String) -> Unit = {}
     ) {
-        val user = Firebase.auth.currentUser ?: return
+        val user = auth.currentUser ?: return
 
         db.reference.child("users").child(user.uid).get()
             .addOnSuccessListener {
@@ -142,7 +138,7 @@ class AuthRepository {
     @SuppressLint("NewApi")
     fun editDateUser(date: String, onSuccess: () -> Unit,){
 
-        val user = Firebase.auth.currentUser ?: return
+        val user = auth.currentUser ?: return
 
         val fromFormat = SimpleDateFormat("ddMMyyyy", Locale.getDefault())
         val dateCorrect = fromFormat.parse(date).parseToDateFormat()
